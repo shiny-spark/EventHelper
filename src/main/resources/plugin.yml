@@ -1,0 +1,11 @@
+name: EventHelper
+version: '${project.version}'
+main: ru.sparkcraft.eventhelper.EventHelper
+api-version: 1.16
+authors: [ Spark ]
+website: sparkcraft.ru
+commands:
+  eventhelper:
+    description: no
+    aliases:
+      - e
