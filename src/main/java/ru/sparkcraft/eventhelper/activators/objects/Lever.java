@@ -1,19 +1,17 @@
 package ru.sparkcraft.eventhelper.activators.objects;
 
 import org.bukkit.Location;
-import ru.sparkcraft.eventhelper.activators.Activator;
-import ru.sparkcraft.eventhelper.activators.EventProcessor;
-import ru.sparkcraft.eventhelper.activators.EventType;
-import ru.sparkcraft.eventhelper.activators.HaveLocation;
+import ru.sparkcraft.eventhelper.EventHelper;
+import ru.sparkcraft.eventhelper.activators.*;
 
 public class Lever extends Activator implements HaveLocation {
 
     private final Location location;
 
-    public Lever(String owner, String name, Location location) {
-        super(owner, name);
+    public Lever(EventHelper plugin, String owner, ActivatorType type, String name, Location location) {
+        super(plugin, owner, type, name);
         this.location = location;
-        saveToFile(this);
+        saveToFile(plugin,this);
     }
 
     @Override

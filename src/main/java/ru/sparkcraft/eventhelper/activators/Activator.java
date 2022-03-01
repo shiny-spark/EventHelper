@@ -1,6 +1,7 @@
 package ru.sparkcraft.eventhelper.activators;
 
 import org.bukkit.Location;
+import ru.sparkcraft.eventhelper.EventHelper;
 
 import java.util.*;
 
@@ -9,12 +10,13 @@ public abstract class Activator {
     private static final Map<String, Set<Activator>> activators = new HashMap<>();
 
     private final String owner;
+    private final ActivatorType type;
     private final String name;
     private final Set<EventProcessor> eventProcessors = new HashSet<>();
 
-
-    protected Activator(String owner, String name) {
+    protected Activator(EventHelper plugin, String owner, ActivatorType type, String name) {
         this.owner = owner;
+        this.type = type;
         this.name = name;
 
         Set<Activator> list = activators.get(owner);
@@ -25,6 +27,9 @@ public abstract class Activator {
             list.add(this);
             activators.put(owner, list);
         }
+
+        plugin.getData().set(this.getOwner() + "." + this.getName() + ".type", this.type.name());
+        plugin.saveData();
     }
 
     @Override
@@ -42,6 +47,10 @@ public abstract class Activator {
 
     public String getOwner() {
         return owner;
+    }
+
+    public ActivatorType getType() {
+        return type;
     }
 
     public String getName() {
@@ -64,8 +73,11 @@ public abstract class Activator {
         return eventProcessors.removeIf(eventProcessor -> eventProcessor.getEventType().equals(eventType));
     }
 
-    public static boolean removeActivator(String owner, String name) {
-        return getActivators(owner).remove(getActivator(owner, name));
+    public static boolean removeActivator(EventHelper plugin, String owner, String name) {
+        Activator activator = getActivator(owner, name);
+        plugin.getData().set(owner + "." + name, null);
+        plugin.saveData();
+        return getActivators(owner).remove(activator);
     }
 
     public static Activator getActivator(String owner, String name) {

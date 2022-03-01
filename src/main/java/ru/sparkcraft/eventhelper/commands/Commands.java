@@ -9,12 +9,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
-import ru.sparkcraft.eventhelper.activators.ActionType;
-import ru.sparkcraft.eventhelper.activators.Activator;
-import ru.sparkcraft.eventhelper.activators.EventProcessor;
-import ru.sparkcraft.eventhelper.activators.EventType;
+import ru.sparkcraft.eventhelper.EventHelper;
+import ru.sparkcraft.eventhelper.activators.*;
 import ru.sparkcraft.eventhelper.activators.objects.Button;
 import ru.sparkcraft.eventhelper.activators.objects.Lever;
 import ru.sparkcraft.eventhelper.activators.objects.Plate;
@@ -26,7 +23,7 @@ import java.util.Map;
 
 public class Commands implements CommandExecutor {
 
-    private final JavaPlugin plugin;
+    private final EventHelper plugin;
     private final Map<CommandSender, Activator> selectedActivators = new HashMap<>();
 
     private static final String NOT_FOUND = "Активатор с таким именем не найден.";
@@ -34,7 +31,7 @@ public class Commands implements CommandExecutor {
     private static final String CREATED = "Активатор создан под именем: ";
     private static final String ALREADY_EXISTS = "Активатор с таким именем уже существует.";
 
-    public Commands(JavaPlugin plugin) {
+    public Commands(EventHelper plugin) {
         this.plugin = plugin;
     }
 
@@ -99,7 +96,7 @@ public class Commands implements CommandExecutor {
                         }
                     }
 
-                    if (activator.addEventProcessor(new EventProcessor(activator, eventType))) {
+                    if (activator.addEventProcessor(new EventProcessor(activator, eventType, plugin))) {
                         activator.getEventProcessor(eventType).addAction(actionType, finalValue);
                         sender.sendMessage("Добавлено действие " + actionType + " к событию " + eventType + " активатора " + activator.getName());
                     } else {
@@ -144,11 +141,11 @@ public class Commands implements CommandExecutor {
         if (Activator.getActivator(playerName, activatorName) == null) {
             sender.sendMessage(CREATED + activatorName);
             if (activatorClass == Button.class) {
-                selectActivator(sender, new Button(playerName, activatorName, location));
+                selectActivator(sender, new Button(plugin, playerName, ActivatorType.BUTTON, activatorName, location));
             } else if (activatorClass == Plate.class) {
-                selectActivator(sender, new Plate(playerName, activatorName, location));
+                selectActivator(sender, new Plate(plugin, playerName, ActivatorType.PLATE, activatorName, location));
             } else if (activatorClass == Lever.class) {
-                selectActivator(sender, new Lever(playerName, activatorName, location));
+                selectActivator(sender, new Lever(plugin, playerName, ActivatorType.LEVER, activatorName, location));
             }
         } else {
             sender.sendMessage(ALREADY_EXISTS);
@@ -180,7 +177,7 @@ public class Commands implements CommandExecutor {
                     int index = Integer.parseInt(args[2]);
                     EventProcessor eventProcessor = activator.getEventProcessor(eventType);
                     if (eventProcessor != null) {
-                        eventProcessor.getActionsQueue().remove(index);
+                        eventProcessor.deleteAction(index);
                         sender.sendMessage("Действие под индексом " + index + " успешно удалено в активаторе " + activator.getName());
                     }
                 } catch (IndexOutOfBoundsException e) {
@@ -196,7 +193,7 @@ public class Commands implements CommandExecutor {
 
     private void remove(CommandSender sender, String[] args) {
         if (args.length == 2) {
-            if (Activator.removeActivator(sender.getName(), args[0])) {
+            if (Activator.removeActivator(plugin, sender.getName(), args[1])) {
                 sender.sendMessage("Активатор успешно удален.");
             } else {
                 sender.sendMessage(NOT_FOUND);

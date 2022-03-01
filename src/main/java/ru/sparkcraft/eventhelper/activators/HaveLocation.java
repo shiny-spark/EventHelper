@@ -7,8 +7,7 @@ public interface HaveLocation {
 
     Location getLocation();
 
-    default void saveToFile(Activator activator) {
-        EventHelper plugin = EventHelper.getInstance();
+    default void saveToFile(EventHelper plugin, Activator activator) {
         plugin.getData().set(activator.getOwner() + "." + activator.getName() + ".location", this.getLocation().toString());
         plugin.saveData();
     }

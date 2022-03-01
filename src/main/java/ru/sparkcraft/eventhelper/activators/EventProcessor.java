@@ -11,20 +11,13 @@ import java.util.Objects;
 
 public class EventProcessor {
 
-    private final EventHelper plugin = EventHelper.getInstance();
-
-    public class Action {
+    public static class Action {
         private final ActionType actionType;
         private final String value;
 
         private Action(ActionType actionType, String value) {
             this.actionType = actionType;
             this.value = value;
-
-            actionsQueue.add(this);
-
-            plugin.getData().set(activator.getOwner() + "." + activator.getName() + ".eventType." + eventType.name() + "." + actionType, value);
-            plugin.saveData();
         }
 
         public ActionType getActionType() {
@@ -39,10 +32,12 @@ public class EventProcessor {
     private final List<Action> actionsQueue = new ArrayList<>();
     private final Activator activator;
     private final EventType eventType;
+    private final EventHelper plugin;
 
-    public EventProcessor(Activator activator, EventType eventType) {
+    public EventProcessor(Activator activator, EventType eventType, EventHelper plugin) {
         this.activator = activator;
         this.eventType = eventType;
+        this.plugin = plugin;
     }
 
     @Override
@@ -102,7 +97,13 @@ public class EventProcessor {
     }
 
     public void addAction(ActionType actionType, String value) {
-        new Action(actionType, value);
+        getActionsQueue().add(new Action(actionType, value));
+        setActions();
+    }
+
+    public void deleteAction(int index) {
+        getActionsQueue().remove(index);
+        setActions();
     }
 
     public Activator getActivator() {
@@ -115,6 +116,15 @@ public class EventProcessor {
 
     public List<Action> getActionsQueue() {
         return actionsQueue;
+    }
+
+    private void setActions() {
+        List<String> actions = new ArrayList<>();
+        for (Action action : actionsQueue) {
+            actions.add(action.actionType + ": " + action.value);
+        }
+        plugin.getData().set(activator.getOwner() + "." + activator.getName() + ".eventType." + eventType.name(), actions);
+        plugin.saveData();
     }
 }
 
