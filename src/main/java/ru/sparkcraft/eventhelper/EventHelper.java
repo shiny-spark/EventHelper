@@ -2,13 +2,13 @@ package ru.sparkcraft.eventhelper;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
-import ru.sparkcraft.eventhelper.activators.ActivatorType;
+import ru.sparkcraft.eventhelper.activators.*;
 import ru.sparkcraft.eventhelper.activators.objects.Button;
 import ru.sparkcraft.eventhelper.activators.objects.Lever;
 import ru.sparkcraft.eventhelper.commands.Commands;
@@ -75,22 +75,37 @@ public final class EventHelper extends JavaPlugin {
 
     private void loadData() {
         for (String nick : getData().getKeys(false)) {
-            System.out.println(nick);
 
-            ConfigurationSection section = getData().getConfigurationSection(nick);
-            for (String activatorName : section.getKeys(false)) {
-                System.out.println(activatorName);
-                Location location = getData().getLocation(nick + "." + activatorName + ".location");
+            for (String activatorName : getData().getConfigurationSection(nick).getKeys(false)) {
+
+                String[] locArgs = getData().getString(nick + "." + activatorName + ".location").split(",");
+                World w = Bukkit.getWorld(locArgs[0]);
+                double x = Double.parseDouble(locArgs[1]);
+                double y = Double.parseDouble(locArgs[2]);
+                double z = Double.parseDouble(locArgs[3]);
+                Location location = new Location(w, x, y, z);
+
                 switch (ActivatorType.valueOf(getData().getString(nick + "." + activatorName + ".type"))) {
-                    case BUTTON -> {
-                        new Button(this, nick, ActivatorType.LEVER, activatorName, location);
+                    case LEVER -> {
+                        Activator activator = new Lever(this, nick, ActivatorType.LEVER, activatorName, location);
+
+                        for (String eventType : getData().getConfigurationSection(nick + "." + activatorName + ".eventType").getKeys(false)) {
+                            if (activator.addEventProcessor(new EventProcessor(activator, EventType.valueOf(eventType), this))) {
+                                for (String action : getData().getStringList(nick + "." + activatorName + ".eventType." + eventType)) {
+                                    String[] act = action.split(":");
+                                    ActionType actionType = ActionType.valueOf(act[0]);
+                                    String value = act[1];
+                                    activator.getEventProcessor(EventType.valueOf(eventType)).addAction(actionType, value);
+                                }
+                            }
+                        }
                     }
                     case CHEST -> {
                     }
                     case DOOR -> {
                     }
-                    case LEVER -> {
-                        new Lever(this, nick, ActivatorType.LEVER, activatorName, location);
+                    case BUTTON -> {
+                        new Button(this, nick, ActivatorType.BUTTON, activatorName, location);
                     }
                     case PLATE -> {
                     }

@@ -121,7 +121,7 @@ public class EventProcessor {
     private void setActions() {
         List<String> actions = new ArrayList<>();
         for (Action action : actionsQueue) {
-            actions.add(action.actionType + ": " + action.value);
+            actions.add(action.actionType + ":" + action.value);
         }
         plugin.getData().set(activator.getOwner() + "." + activator.getName() + ".eventType." + eventType.name(), actions);
         plugin.saveData();
