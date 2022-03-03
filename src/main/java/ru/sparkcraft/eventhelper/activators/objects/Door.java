@@ -29,5 +29,4 @@ public class Door extends Activator implements HaveLocation {
         }
         return false;
     }
-    // use, open, close
 }

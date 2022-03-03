@@ -9,8 +9,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.sparkcraft.eventhelper.activators.*;
-import ru.sparkcraft.eventhelper.activators.objects.Button;
-import ru.sparkcraft.eventhelper.activators.objects.Lever;
+import ru.sparkcraft.eventhelper.activators.objects.*;
 import ru.sparkcraft.eventhelper.commands.Commands;
 import ru.sparkcraft.eventhelper.listeners.EventListener;
 
@@ -86,31 +85,25 @@ public final class EventHelper extends JavaPlugin {
                 Location location = new Location(w, x, y, z);
 
                 switch (ActivatorType.valueOf(getData().getString(nick + "." + activatorName + ".type"))) {
-                    case LEVER -> {
-                        Activator activator = new Lever(this, nick, ActivatorType.LEVER, activatorName, location);
+                    case LEVER -> loadActivator(nick, activatorName, new Lever(this, nick, ActivatorType.LEVER, activatorName, location));
+                    case CHEST -> loadActivator(nick, activatorName, new Chest(this, nick, ActivatorType.CHEST, activatorName, location));
+                    case DOOR -> loadActivator(nick, activatorName, new Door(this, nick, ActivatorType.DOOR, activatorName, location));
+                    case BUTTON -> loadActivator(nick, activatorName, new Button(this, nick, ActivatorType.BUTTON, activatorName, location));
+                    case PLATE -> loadActivator(nick, activatorName, new Plate(this, nick, ActivatorType.PLATE, activatorName, location));
+                    case REGION -> loadActivator(nick, activatorName, new Region(this, nick, ActivatorType.REGION, activatorName, location));
+                }
+            }
+        }
+    }
 
-                        for (String eventType : getData().getConfigurationSection(nick + "." + activatorName + ".eventType").getKeys(false)) {
-                            if (activator.addEventProcessor(new EventProcessor(activator, EventType.valueOf(eventType), this))) {
-                                for (String action : getData().getStringList(nick + "." + activatorName + ".eventType." + eventType)) {
-                                    String[] act = action.split(":");
-                                    ActionType actionType = ActionType.valueOf(act[0]);
-                                    activator.getEventProcessor(EventType.valueOf(eventType))
-                                            .addAction(actionType, act.length > 1 ? act[1] : null);
-                                }
-                            }
-                        }
-                    }
-                    case CHEST -> {
-                    }
-                    case DOOR -> {
-                    }
-                    case BUTTON -> {
-                        new Button(this, nick, ActivatorType.BUTTON, activatorName, location);
-                    }
-                    case PLATE -> {
-                    }
-                    case REGION -> {
-                    }
+    private void loadActivator(String nick, String activatorName, Activator activator) {
+        for (String eventType : getData().getConfigurationSection(nick + "." + activatorName + ".eventType").getKeys(false)) {
+            if (activator.addEventProcessor(new EventProcessor(activator, EventType.valueOf(eventType), this))) {
+                for (String action : getData().getStringList(nick + "." + activatorName + ".eventType." + eventType)) {
+                    String[] act = action.split(":");
+                    ActionType actionType = ActionType.valueOf(act[0]);
+                    activator.getEventProcessor(EventType.valueOf(eventType))
+                            .addAction(actionType, act.length > 1 ? act[1] : null);
                 }
             }
         }

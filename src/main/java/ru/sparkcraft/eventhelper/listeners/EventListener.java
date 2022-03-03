@@ -16,21 +16,21 @@ public class EventListener implements Listener {
 
     // ON, OFF, USE, OPEN, CLOSE, PUT, TAKE, ENTER, LEAVE
 
-
-    @EventHandler // Button || Lever || Plate USE
+    @EventHandler // Button / Lever / Plate USE
     public void onButtonOrLeverUse(PlayerInteractEvent event) {
         Block clickedBlock = event.getClickedBlock();
 
         if (clickedBlock != null && Activator.getActivator(clickedBlock.getLocation()) != null &&
                 ((event.getAction() == Action.RIGHT_CLICK_BLOCK &&
-                ((clickedBlock.getType().name().endsWith("_BUTTON") || clickedBlock.getType() == Material.LEVER))) ||
-                (event.getAction() == Action.PHYSICAL && clickedBlock.getType().name().endsWith("_PLATE")))) {
+                        (clickedBlock.getType().name().endsWith("_BUTTON") || clickedBlock.getType().name().endsWith("_DOOR") ||
+                                clickedBlock.getType() == Material.LEVER)) ||
+                        (event.getAction() == Action.PHYSICAL && clickedBlock.getType().name().endsWith("_PLATE")))) {
 
             runActions(clickedBlock.getLocation(), event.getPlayer(), EventType.USE);
         }
     }
 
-    @EventHandler // Lever ON || OFF
+    @EventHandler // Lever ON / OFF
     public void onLeverOnOff(PlayerInteractEvent event) {
         Block clickedBlock = event.getClickedBlock();
 
@@ -46,7 +46,7 @@ public class EventListener implements Listener {
         }
     }
 
-    @EventHandler // Door OPEN || CLOSE
+    @EventHandler // Door OPEN / CLOSE
     public void onDoorOpenClose(PlayerInteractEvent event) {
         Block clickedBlock = event.getClickedBlock();
 
