@@ -11,6 +11,7 @@ public class Button extends Activator implements HaveLocation {
     public Button(EventHelper plugin, String owner, ActivatorType type, String name, Location location) {
         super(plugin, owner, type, name);
         this.location = location;
+        saveToFile(plugin, this);
     }
 
     @Override

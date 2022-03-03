@@ -11,6 +11,7 @@ public class Plate extends Activator implements HaveLocation {
     public Plate(EventHelper plugin, String owner, ActivatorType type, String name, Location location) {
         super(plugin, owner, type, name);
         this.location = location;
+        saveToFile(plugin, this);
     }
 
     @Override

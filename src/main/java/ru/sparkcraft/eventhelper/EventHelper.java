@@ -94,8 +94,8 @@ public final class EventHelper extends JavaPlugin {
                                 for (String action : getData().getStringList(nick + "." + activatorName + ".eventType." + eventType)) {
                                     String[] act = action.split(":");
                                     ActionType actionType = ActionType.valueOf(act[0]);
-                                    String value = act[1];
-                                    activator.getEventProcessor(EventType.valueOf(eventType)).addAction(actionType, value);
+                                    activator.getEventProcessor(EventType.valueOf(eventType))
+                                            .addAction(actionType, act.length > 1 ? act[1] : null);
                                 }
                             }
                         }

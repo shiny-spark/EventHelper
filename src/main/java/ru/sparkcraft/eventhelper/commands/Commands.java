@@ -12,9 +12,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import ru.sparkcraft.eventhelper.EventHelper;
 import ru.sparkcraft.eventhelper.activators.*;
-import ru.sparkcraft.eventhelper.activators.objects.Button;
-import ru.sparkcraft.eventhelper.activators.objects.Lever;
-import ru.sparkcraft.eventhelper.activators.objects.Plate;
+import ru.sparkcraft.eventhelper.activators.objects.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -56,22 +54,25 @@ public class Commands implements CommandExecutor {
     }
 
     private void add(CommandSender sender, String[] args, int index) {
-        if (args.length > index + 2) {
+        try {
             Activator activator = selectedActivators.get(sender);
-            if (activator != null) {
-                try {
-                    EventType eventType = EventType.valueOf(args[index].toUpperCase(Locale.ROOT));
-                    ActionType actionType = ActionType.valueOf(args[index + 1].toUpperCase(Locale.ROOT));
-                    String finalValue = null;
+            EventType eventType = EventType.valueOf(args[index].toUpperCase(Locale.ROOT));
+            ActionType actionType = ActionType.valueOf(args[index + 1].toUpperCase(Locale.ROOT));
+            boolean noArgumentsNeeded = actionType == ActionType.KILL || actionType == ActionType.HEALTH || actionType == ActionType.FLY;
 
-                    if (!(actionType == ActionType.KILL || actionType == ActionType.HEALTH || actionType == ActionType.FLY)) {
+            if (args.length > index + 1 && noArgumentsNeeded) {
+                addAction(activator, eventType, actionType, sender, null);
+                return;
+            }
 
-                        StringBuilder value = new StringBuilder();
-                        for (int i = index + 2; i < args.length; i++) {
-                            value.append(args[i]).append(" ");
-                        }
-                        finalValue = value.toString().trim();
+            if (args.length > index + 2 && !noArgumentsNeeded) {
+
+                if (activator != null) {
+                    StringBuilder value = new StringBuilder();
+                    for (int i = index + 2; i < args.length; i++) {
+                        value.append(args[i]).append(" ");
                     }
+                    String finalValue = value.toString().trim();
 
                     if (actionType == ActionType.TP) {
                         if (args.length == index + 5 || args.length == index + 6) {
@@ -88,6 +89,7 @@ public class Commands implements CommandExecutor {
                                 sender.sendMessage("Неверно указаны координаты.");
                                 return;
                             } catch (ArrayIndexOutOfBoundsException e) {
+                                // Если не указан мир в команде, берем мир, в котором находится игрока
                                 finalValue = finalValue + " " + ((Player) sender).getWorld().getName();
                             }
                         } else {
@@ -96,21 +98,25 @@ public class Commands implements CommandExecutor {
                         }
                     }
 
-                    if (activator.addEventProcessor(new EventProcessor(activator, eventType, plugin))) {
-                        activator.getEventProcessor(eventType).addAction(actionType, finalValue);
-                        sender.sendMessage("Добавлено действие " + actionType + " к событию " + eventType + " активатора " + activator.getName());
-                    } else {
-                        sender.sendMessage(NOT_CAN);
-                    }
+                    addAction(activator, eventType, actionType, sender, finalValue);
 
-                } catch (IllegalArgumentException e) {
-                    sender.sendMessage("Неверные аргументы команды.");
+                } else {
+                    sender.sendMessage("Сначала выберите активатор.");
                 }
             } else {
-                sender.sendMessage("Сначала выберите активатор.");
+                sender.sendMessage("Недостаточно аргументов.");
             }
+        } catch (IllegalArgumentException e) {
+            sender.sendMessage("Неверные аргументы команды.");
+        }
+    }
+
+    private void addAction(Activator activator, EventType eventType, ActionType actionType, CommandSender sender, String value) {
+        if (activator.addEventProcessor(new EventProcessor(activator, eventType, plugin))) {
+            activator.getEventProcessor(eventType).addAction(actionType, value);
+            sender.sendMessage("Добавлено действие " + actionType + " к событию " + eventType + " активатора " + activator.getName());
         } else {
-            sender.sendMessage("Недостаточно аргументов.");
+            sender.sendMessage(NOT_CAN);
         }
     }
 
@@ -122,11 +128,13 @@ public class Commands implements CommandExecutor {
 
             if (block != null) {
                 if (block.getType().name().endsWith("_BUTTON")) {
-                    createActivator(sender, activatorName, block.getLocation(), Button.class);
+                    createActivator(sender, activatorName, block.getLocation(), ActivatorType.BUTTON);
                 } else if (block.getType().name().endsWith("_PLATE")) {
-                    createActivator(sender, activatorName, block.getLocation(), Plate.class);
+                    createActivator(sender, activatorName, block.getLocation(), ActivatorType.PLATE);
+                } else if (block.getType().name().endsWith("_DOOR")) {
+                    createActivator(sender, activatorName, block.getLocation(), ActivatorType.DOOR);
                 } else if (block.getType() == Material.LEVER) {
-                    createActivator(sender, activatorName, block.getLocation(), Lever.class);
+                    createActivator(sender, activatorName, block.getLocation(), ActivatorType.LEVER);
                 } else {
                     player.sendMessage("Данный тип блока не может быть активатором.");
                 }
@@ -136,16 +144,17 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void createActivator(CommandSender sender, String activatorName, Location location, Class<?> activatorClass) {
+    private void createActivator(CommandSender sender, String activatorName, Location location, ActivatorType activatorType) {
         String playerName = sender.getName();
         if (Activator.getActivator(playerName, activatorName) == null) {
             sender.sendMessage(CREATED + activatorName);
-            if (activatorClass == Button.class) {
-                selectActivator(sender, new Button(plugin, playerName, ActivatorType.BUTTON, activatorName, location));
-            } else if (activatorClass == Plate.class) {
-                selectActivator(sender, new Plate(plugin, playerName, ActivatorType.PLATE, activatorName, location));
-            } else if (activatorClass == Lever.class) {
-                selectActivator(sender, new Lever(plugin, playerName, ActivatorType.LEVER, activatorName, location));
+            switch (activatorType) {
+                case BUTTON -> selectActivator(sender, new Button(plugin, playerName, ActivatorType.BUTTON, activatorName, location));
+                case CHEST -> selectActivator(sender, new Chest(plugin, playerName, ActivatorType.CHEST, activatorName, location));
+                case DOOR -> selectActivator(sender, new Door(plugin, playerName, ActivatorType.DOOR, activatorName, location));
+                case LEVER -> selectActivator(sender, new Lever(plugin, playerName, ActivatorType.LEVER, activatorName, location));
+                case PLATE -> selectActivator(sender, new Plate(plugin, playerName, ActivatorType.PLATE, activatorName, location));
+                case REGION -> selectActivator(sender, new Region(plugin, playerName, ActivatorType.REGION, activatorName, location));
             }
         } else {
             sender.sendMessage(ALREADY_EXISTS);
@@ -262,7 +271,8 @@ public class Commands implements CommandExecutor {
                 sender.sendMessage(" " + eventProcessor.getEventType().name() + ":");
                 int index = 0;
                 for (EventProcessor.Action action : eventProcessor.getActionsQueue()) {
-                    sender.sendMessage("  - " + (index++) + ". " + action.getActionType().name() + " " + action.getValue());
+                    String result = action.getValue() == null ? action.getActionType().name() : action.getActionType().name() + ": " + action.getValue();
+                    sender.sendMessage("  - " + (index++) + ". " + result);
                 }
             }
         } else {

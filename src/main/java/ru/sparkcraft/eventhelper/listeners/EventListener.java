@@ -3,6 +3,7 @@ package ru.sparkcraft.eventhelper.listeners;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.type.Switch;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -16,13 +17,15 @@ public class EventListener implements Listener {
     // ON, OFF, USE, OPEN, CLOSE, PUT, TAKE, ENTER, LEAVE
 
 
-    @EventHandler // Button || Lever USE
+    @EventHandler // Button || Lever || Plate USE
     public void onButtonOrLeverUse(PlayerInteractEvent event) {
         Block clickedBlock = event.getClickedBlock();
 
         if (clickedBlock != null && Activator.getActivator(clickedBlock.getLocation()) != null &&
-                event.getAction() == Action.RIGHT_CLICK_BLOCK &&
-                (clickedBlock.getType().name().endsWith("_BUTTON") || clickedBlock.getType() == Material.LEVER)) {
+                ((event.getAction() == Action.RIGHT_CLICK_BLOCK &&
+                ((clickedBlock.getType().name().endsWith("_BUTTON") || clickedBlock.getType() == Material.LEVER))) ||
+                (event.getAction() == Action.PHYSICAL && clickedBlock.getType().name().endsWith("_PLATE")))) {
+
             runActions(clickedBlock.getLocation(), event.getPlayer(), EventType.USE);
         }
     }
@@ -43,25 +46,21 @@ public class EventListener implements Listener {
         }
     }
 
-/*    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
+    @EventHandler // Door OPEN || CLOSE
+    public void onDoorOpenClose(PlayerInteractEvent event) {
         Block clickedBlock = event.getClickedBlock();
 
-        if (clickedBlock != null && getActivator(clickedBlock.getLocation()) != null &&
+        if (clickedBlock != null && Activator.getActivator(clickedBlock.getLocation()) != null &&
+                event.getAction() == Action.RIGHT_CLICK_BLOCK &&
+                clickedBlock.getType().name().endsWith("_DOOR")) {
 
-                ((event.getAction() == Action.RIGHT_CLICK_BLOCK &&
-                        clickedBlock.getType().name().endsWith("_BUTTON")) ||
-
-                        (clickedBlock.getType() == Material.LEVER) ||
-
-                        (event.getAction() == Action.PHYSICAL &&
-                                clickedBlock.getType().name().endsWith("_PLATE")))) {
-
-            for (EventProcessor eventProcessor : getActivator(clickedBlock.getLocation()).getEventProcessors()) {
-                eventProcessor.run(event.getPlayer());
+            if (!((Openable) clickedBlock.getBlockData()).isOpen()) {
+                runActions(clickedBlock.getLocation(), event.getPlayer(), EventType.OPEN);
+            } else {
+                runActions(clickedBlock.getLocation(), event.getPlayer(), EventType.CLOSE);
             }
         }
-    }*/
+    }
 
     private void runActions(Location location, Player player, EventType eventType) {
         Activator activator = Activator.getActivator(location);

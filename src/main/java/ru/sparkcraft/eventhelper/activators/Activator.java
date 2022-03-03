@@ -27,7 +27,6 @@ public abstract class Activator {
             list.add(this);
             activators.put(owner, list);
         }
-
         plugin.getData().set(this.getOwner() + "." + this.getName() + ".type", this.type.name());
         plugin.saveData();
     }
