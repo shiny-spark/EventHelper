@@ -1,5 +1,6 @@
 package ru.sparkcraft.eventhelper.commands;
 
+import com.sk89q.worldguard.protection.managers.storage.RegionDatabase;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -123,7 +124,7 @@ public class Commands implements CommandExecutor {
     private void create(CommandSender sender, String[] args) {
         if (args.length == 2) {
             Player player = (Player) sender;
-            Block block = player.getTargetBlock(5);
+            Block block = player.getTargetBlock(null, 5);
             String activatorName = args[1];
 
             if (block != null) {
@@ -141,21 +142,36 @@ public class Commands implements CommandExecutor {
             } else {
                 sender.sendMessage("Блок, на который вы смотрите, слишком далеко.");
             }
+        } else if (args.length == 4 && args[2].equals("region")) {
+            String activatorName = args[1];
+            String regionName = args[3];
+            createActivator(sender, activatorName, ActivatorType.REGION, regionName);
         }
     }
 
     private void createActivator(CommandSender sender, String activatorName, Location location, ActivatorType activatorType) {
-        String playerName = sender.getName();
-        if (Activator.getActivator(playerName, activatorName) == null) {
-            sender.sendMessage(CREATED + activatorName);
+        String owner = sender.getName();
+        if (Activator.getActivator(owner, activatorName) == null) {
             switch (activatorType) {
-                case BUTTON -> selectActivator(sender, new Button(plugin, playerName, ActivatorType.BUTTON, activatorName, location));
-                case CHEST -> selectActivator(sender, new Chest(plugin, playerName, ActivatorType.CHEST, activatorName, location));
-                case DOOR -> selectActivator(sender, new Door(plugin, playerName, ActivatorType.DOOR, activatorName, location));
-                case LEVER -> selectActivator(sender, new Lever(plugin, playerName, ActivatorType.LEVER, activatorName, location));
-                case PLATE -> selectActivator(sender, new Plate(plugin, playerName, ActivatorType.PLATE, activatorName, location));
-                case REGION -> selectActivator(sender, new Region(plugin, playerName, ActivatorType.REGION, activatorName, location));
+                case BUTTON -> selectActivator(sender, new Button(plugin, owner, activatorType, activatorName, location));
+                case CHEST -> selectActivator(sender, new Chest(plugin, owner, activatorType, activatorName, location));
+                case DOOR -> selectActivator(sender, new Door(plugin, owner, activatorType, activatorName, location));
+                case LEVER -> selectActivator(sender, new Lever(plugin, owner, activatorType, activatorName, location));
+                case PLATE -> selectActivator(sender, new Plate(plugin, owner, activatorType, activatorName, location));
             }
+            sender.sendMessage(CREATED + activatorName);
+        } else {
+            sender.sendMessage(ALREADY_EXISTS);
+        }
+    }
+
+    private void createActivator(CommandSender sender, String activatorName, ActivatorType activatorType, String regionName) {
+        String owner = sender.getName();
+        if (Activator.getActivator(owner, activatorName) == null) {
+            if (activatorType == ActivatorType.REGION) {
+                selectActivator(sender, new Region(plugin, owner, activatorType, activatorName, regionName));
+            }
+            sender.sendMessage(CREATED + activatorName);
         } else {
             sender.sendMessage(ALREADY_EXISTS);
         }

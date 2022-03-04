@@ -9,7 +9,7 @@ import ru.sparkcraft.eventhelper.activators.HaveLocation;
 
 public class Chest extends Activator implements HaveLocation {
 
-    private Location location;
+    private final Location location;
 
     public Chest(EventHelper plugin, String owner, ActivatorType type, String name, Location location) {
         super(plugin, owner, type, name);

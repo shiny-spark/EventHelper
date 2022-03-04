@@ -2,6 +2,7 @@ package ru.sparkcraft.eventhelper.activators;
 
 import org.bukkit.Location;
 import ru.sparkcraft.eventhelper.EventHelper;
+import ru.sparkcraft.eventhelper.activators.objects.Region;
 
 import java.util.*;
 
@@ -75,6 +76,7 @@ public abstract class Activator {
     public static boolean removeActivator(EventHelper plugin, String owner, String name) {
         Activator activator = getActivator(owner, name);
         plugin.getData().set(owner + "." + name, null);
+        //todo проверить правильность удаления из файла
         plugin.saveData();
         return getActivators(owner).remove(activator);
     }
@@ -94,6 +96,18 @@ public abstract class Activator {
             for (Activator activator : list) {
                 if (activator instanceof HaveLocation &&
                         ((HaveLocation) activator).getLocation().equals(location)) {
+                    return activator;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Activator getActivator(String regionName) {
+        for (Set<Activator> list : activators.values()) {
+            for (Activator activator : list) {
+                if (activator.getType() == ActivatorType.REGION &&
+                        ((Region) activator).getRegionName().equals(regionName)) {
                     return activator;
                 }
             }

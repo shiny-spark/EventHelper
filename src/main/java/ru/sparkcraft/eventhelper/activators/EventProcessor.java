@@ -85,7 +85,7 @@ public class EventProcessor {
                 case TAKE:
                     break;
                 case ANNOUNCE:
-                    Bukkit.broadcast();
+                  //  Bukkit.broadcast();
                     //todo
                     break;
                 case FLY:

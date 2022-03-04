@@ -77,20 +77,26 @@ public final class EventHelper extends JavaPlugin {
 
             for (String activatorName : getData().getConfigurationSection(nick).getKeys(false)) {
 
-                String[] locArgs = getData().getString(nick + "." + activatorName + ".location").split(",");
-                World w = Bukkit.getWorld(locArgs[0]);
-                double x = Double.parseDouble(locArgs[1]);
-                double y = Double.parseDouble(locArgs[2]);
-                double z = Double.parseDouble(locArgs[3]);
-                Location location = new Location(w, x, y, z);
+                ActivatorType activatorType = ActivatorType.valueOf(getData().getString(nick + "." + activatorName + ".type"));
 
-                switch (ActivatorType.valueOf(getData().getString(nick + "." + activatorName + ".type"))) {
-                    case LEVER -> loadActivator(nick, activatorName, new Lever(this, nick, ActivatorType.LEVER, activatorName, location));
-                    case CHEST -> loadActivator(nick, activatorName, new Chest(this, nick, ActivatorType.CHEST, activatorName, location));
-                    case DOOR -> loadActivator(nick, activatorName, new Door(this, nick, ActivatorType.DOOR, activatorName, location));
-                    case BUTTON -> loadActivator(nick, activatorName, new Button(this, nick, ActivatorType.BUTTON, activatorName, location));
-                    case PLATE -> loadActivator(nick, activatorName, new Plate(this, nick, ActivatorType.PLATE, activatorName, location));
-                    case REGION -> loadActivator(nick, activatorName, new Region(this, nick, ActivatorType.REGION, activatorName, location));
+                if (activatorType != ActivatorType.REGION) {
+                    String[] locArgs = getData().getString(nick + "." + activatorName + ".location").split(",");
+                    World w = Bukkit.getWorld(locArgs[0]);
+                    double x = Double.parseDouble(locArgs[1]);
+                    double y = Double.parseDouble(locArgs[2]);
+                    double z = Double.parseDouble(locArgs[3]);
+                    Location location = new Location(w, x, y, z);
+
+                    switch (activatorType) {
+                        case LEVER -> loadActivator(nick, activatorName, new Lever(this, nick, ActivatorType.LEVER, activatorName, location));
+                        case CHEST -> loadActivator(nick, activatorName, new Chest(this, nick, ActivatorType.CHEST, activatorName, location));
+                        case DOOR -> loadActivator(nick, activatorName, new Door(this, nick, ActivatorType.DOOR, activatorName, location));
+                        case BUTTON -> loadActivator(nick, activatorName, new Button(this, nick, ActivatorType.BUTTON, activatorName, location));
+                        case PLATE -> loadActivator(nick, activatorName, new Plate(this, nick, ActivatorType.PLATE, activatorName, location));
+                    }
+                } else {
+                    String regionName = getData().getString(nick + "." + activatorName + ".regionName");
+                    loadActivator(nick, activatorName, new Region(this, nick, ActivatorType.REGION, activatorName, regionName));
                 }
             }
         }
