@@ -1,6 +1,5 @@
 package ru.sparkcraft.eventhelper.commands;
 
-import com.sk89q.worldguard.protection.managers.storage.RegionDatabase;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -29,6 +28,7 @@ public class Commands implements CommandExecutor {
     private static final String NOT_CAN = "Данный тип действия недоступен для этого типа активатора.";
     private static final String CREATED = "Активатор создан под именем: ";
     private static final String ALREADY_EXISTS = "Активатор с таким именем уже существует.";
+    private static final String NEED_TO_SELECT = "Сначала выберите активатор.";
 
     public Commands(EventHelper plugin) {
         this.plugin = plugin;
@@ -59,55 +59,63 @@ public class Commands implements CommandExecutor {
             Activator activator = selectedActivators.get(sender);
             EventType eventType = EventType.valueOf(args[index].toUpperCase(Locale.ROOT));
             ActionType actionType = ActionType.valueOf(args[index + 1].toUpperCase(Locale.ROOT));
-            boolean noArgumentsNeeded = actionType == ActionType.KILL || actionType == ActionType.HEALTH || actionType == ActionType.FLY;
+            boolean noArgumentsNeeded = actionType == ActionType.KILL || actionType == ActionType.HEALTH;
 
-            if (args.length > index + 1 && noArgumentsNeeded) {
-                addAction(activator, eventType, actionType, sender, null);
-                return;
-            }
+            if (activator != null) {
 
-            if (args.length > index + 2 && !noArgumentsNeeded) {
+                if (args.length > index + 1 && noArgumentsNeeded) {
+                    addAction(activator, eventType, actionType, sender, null);
+                    return;
+                }
 
-                if (activator != null) {
+                if (args.length > index + 2 && actionType == ActionType.FLY) {
+                    if (args[index + 2].equalsIgnoreCase("on") || args[index + 2].equalsIgnoreCase("off")) {
+                        addAction(activator, eventType, actionType, sender, args[index + 2]);
+                    } else {
+                        sender.sendMessage("Неверные аргументы команды.");
+                    }
+                    return;
+                }
+
+                if (args.length > index + 2 && !noArgumentsNeeded) {
+
                     StringBuilder value = new StringBuilder();
                     for (int i = index + 2; i < args.length; i++) {
                         value.append(args[i]).append(" ");
                     }
                     String finalValue = value.toString().trim();
 
-                    if (actionType == ActionType.TP) {
-                        if (args.length == index + 5 || args.length == index + 6) {
-                            try {
-                                Integer.parseInt(args[index + 2]);
-                                Integer.parseInt(args[index + 3]);
-                                Integer.parseInt(args[index + 4]);
-                                World world = Bukkit.getWorld(args[index + 5]);
-                                if (world == null) {
-                                    sender.sendMessage("Неверное название мира.");
-                                    return;
-                                }
-                            } catch (NumberFormatException e) {
-                                sender.sendMessage("Неверно указаны координаты.");
+                    if (actionType == ActionType.TP &&
+                            (args.length == index + 5 || args.length == index + 6)) {
+                        try {
+                            Double.parseDouble(args[index + 2]);
+                            Double.parseDouble(args[index + 3]);
+                            Double.parseDouble(args[index + 4]);
+                            World world = Bukkit.getWorld(args[index + 5]);
+                            if (world == null) {
+                                sender.sendMessage("Неверное название мира.");
                                 return;
-                            } catch (ArrayIndexOutOfBoundsException e) {
-                                // Если не указан мир в команде, берем мир, в котором находится игрока
-                                finalValue = finalValue + " " + ((Player) sender).getWorld().getName();
                             }
-                        } else {
-                            sender.sendMessage("Недостаточно аргументов.");
+                        } catch (NumberFormatException e) {
+                            sender.sendMessage("Неверно указаны координаты.");
                             return;
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            // Если не указан мир в команде, берем мир, в котором находится игрок
+                            finalValue = finalValue + " " + ((Player) sender).getWorld().getName();
                         }
+                    } else {
+                        sender.sendMessage("Недостаточно аргументов.");
+                        return;
                     }
-
                     addAction(activator, eventType, actionType, sender, finalValue);
-
                 } else {
-                    sender.sendMessage("Сначала выберите активатор.");
+                    sender.sendMessage("Недостаточно аргументов.");
                 }
             } else {
-                sender.sendMessage("Недостаточно аргументов.");
+                sender.sendMessage(NEED_TO_SELECT);
             }
-        } catch (IllegalArgumentException e) {
+        } catch (
+                IllegalArgumentException e) {
             sender.sendMessage("Неверные аргументы команды.");
         }
     }
@@ -126,21 +134,16 @@ public class Commands implements CommandExecutor {
             Player player = (Player) sender;
             Block block = player.getTargetBlock(null, 5);
             String activatorName = args[1];
-
-            if (block != null) {
-                if (block.getType().name().endsWith("_BUTTON")) {
-                    createActivator(sender, activatorName, block.getLocation(), ActivatorType.BUTTON);
-                } else if (block.getType().name().endsWith("_PLATE")) {
-                    createActivator(sender, activatorName, block.getLocation(), ActivatorType.PLATE);
-                } else if (block.getType().name().endsWith("_DOOR")) {
-                    createActivator(sender, activatorName, block.getLocation(), ActivatorType.DOOR);
-                } else if (block.getType() == Material.LEVER) {
-                    createActivator(sender, activatorName, block.getLocation(), ActivatorType.LEVER);
-                } else {
-                    player.sendMessage("Данный тип блока не может быть активатором.");
-                }
+            if (block.getType().name().endsWith("_BUTTON")) {
+                createActivator(sender, activatorName, block.getLocation(), ActivatorType.BUTTON);
+            } else if (block.getType().name().endsWith("_PLATE")) {
+                createActivator(sender, activatorName, block.getLocation(), ActivatorType.PLATE);
+            } else if (block.getType().name().endsWith("_DOOR")) {
+                createActivator(sender, activatorName, Door.getTop(block), ActivatorType.DOOR);
+            } else if (block.getType() == Material.LEVER) {
+                createActivator(sender, activatorName, block.getLocation(), ActivatorType.LEVER);
             } else {
-                sender.sendMessage("Блок, на который вы смотрите, слишком далеко.");
+                player.sendMessage("Данный тип блока не может быть активатором.");
             }
         } else if (args.length == 4 && args[2].equals("region")) {
             String activatorName = args[1];
@@ -152,14 +155,15 @@ public class Commands implements CommandExecutor {
     private void createActivator(CommandSender sender, String activatorName, Location location, ActivatorType activatorType) {
         String owner = sender.getName();
         if (Activator.getActivator(owner, activatorName) == null) {
+            sender.sendMessage(CREATED + activatorName);
             switch (activatorType) {
                 case BUTTON -> selectActivator(sender, new Button(plugin, owner, activatorType, activatorName, location));
                 case CHEST -> selectActivator(sender, new Chest(plugin, owner, activatorType, activatorName, location));
                 case DOOR -> selectActivator(sender, new Door(plugin, owner, activatorType, activatorName, location));
                 case LEVER -> selectActivator(sender, new Lever(plugin, owner, activatorType, activatorName, location));
                 case PLATE -> selectActivator(sender, new Plate(plugin, owner, activatorType, activatorName, location));
+                default -> throw new IllegalStateException("Unexpected value: " + activatorType);
             }
-            sender.sendMessage(CREATED + activatorName);
         } else {
             sender.sendMessage(ALREADY_EXISTS);
         }
@@ -168,10 +172,10 @@ public class Commands implements CommandExecutor {
     private void createActivator(CommandSender sender, String activatorName, ActivatorType activatorType, String regionName) {
         String owner = sender.getName();
         if (Activator.getActivator(owner, activatorName) == null) {
+            sender.sendMessage(CREATED + activatorName);
             if (activatorType == ActivatorType.REGION) {
                 selectActivator(sender, new Region(plugin, owner, activatorType, activatorName, regionName));
             }
-            sender.sendMessage(CREATED + activatorName);
         } else {
             sender.sendMessage(ALREADY_EXISTS);
         }
@@ -211,7 +215,7 @@ public class Commands implements CommandExecutor {
                     sender.sendMessage("Указаны неверные аргументы команды.");
                 }
             } else {
-                sender.sendMessage("Сначала выберите активатор.");
+                sender.sendMessage(NEED_TO_SELECT);
             }
         }
     }
@@ -241,7 +245,7 @@ public class Commands implements CommandExecutor {
                     sender.sendMessage("Указан неверный тип события активатора.");
                 }
             } else {
-                sender.sendMessage("Сначала выберите активатор.");
+                sender.sendMessage(NEED_TO_SELECT);
             }
         }
     }

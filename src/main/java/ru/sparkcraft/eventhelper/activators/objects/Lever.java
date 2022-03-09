@@ -4,6 +4,8 @@ import org.bukkit.Location;
 import ru.sparkcraft.eventhelper.EventHelper;
 import ru.sparkcraft.eventhelper.activators.*;
 
+import java.util.Objects;
+
 public class Lever extends Activator implements HaveLocation {
 
     private final Location location;
@@ -11,7 +13,7 @@ public class Lever extends Activator implements HaveLocation {
     public Lever(EventHelper plugin, String owner, ActivatorType type, String name, Location location) {
         super(plugin, owner, type, name);
         this.location = location;
-        saveToFile(plugin,this);
+        saveToFile(plugin, this);
     }
 
     @Override

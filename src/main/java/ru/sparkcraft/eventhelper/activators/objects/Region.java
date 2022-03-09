@@ -6,6 +6,8 @@ import ru.sparkcraft.eventhelper.activators.ActivatorType;
 import ru.sparkcraft.eventhelper.activators.EventProcessor;
 import ru.sparkcraft.eventhelper.activators.EventType;
 
+import java.util.Objects;
+
 public class Region extends Activator {
 
     private final String regionName;

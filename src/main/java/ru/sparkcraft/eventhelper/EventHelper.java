@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -103,13 +104,16 @@ public final class EventHelper extends JavaPlugin {
     }
 
     private void loadActivator(String nick, String activatorName, Activator activator) {
-        for (String eventType : getData().getConfigurationSection(nick + "." + activatorName + ".eventType").getKeys(false)) {
-            if (activator.addEventProcessor(new EventProcessor(activator, EventType.valueOf(eventType), this))) {
-                for (String action : getData().getStringList(nick + "." + activatorName + ".eventType." + eventType)) {
-                    String[] act = action.split(":");
-                    ActionType actionType = ActionType.valueOf(act[0]);
-                    activator.getEventProcessor(EventType.valueOf(eventType))
-                            .addAction(actionType, act.length > 1 ? act[1] : null);
+        ConfigurationSection configSection = getData().getConfigurationSection(nick + "." + activatorName + ".eventType");
+        if (configSection != null) {
+            for (String eventType : configSection.getKeys(false)) {
+                if (activator.addEventProcessor(new EventProcessor(activator, EventType.valueOf(eventType), this))) {
+                    for (String action : getData().getStringList(nick + "." + activatorName + ".eventType." + eventType)) {
+                        String[] act = action.split(":");
+                        ActionType actionType = ActionType.valueOf(act[0]);
+                        activator.getEventProcessor(EventType.valueOf(eventType))
+                                .addAction(actionType, act.length > 1 ? act[1] : null);
+                    }
                 }
             }
         }

@@ -1,8 +1,12 @@
 package ru.sparkcraft.eventhelper.activators.objects;
 
 import org.bukkit.Location;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.Bisected;
 import ru.sparkcraft.eventhelper.EventHelper;
 import ru.sparkcraft.eventhelper.activators.*;
+
+import java.util.Objects;
 
 public class Door extends Activator implements HaveLocation {
 
@@ -28,5 +32,14 @@ public class Door extends Activator implements HaveLocation {
             return true;
         }
         return false;
+    }
+
+    public static Location getTop(Block block) {
+        Bisected.Half half = ((Bisected)block.getBlockData()).getHalf();
+        if (half == Bisected.Half.BOTTOM) {
+            return new Location(block.getWorld(), block.getX(), block.getY() + 1.0, block.getZ());
+        } else {
+            return block.getLocation();
+        }
     }
 }

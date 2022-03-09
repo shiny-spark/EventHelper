@@ -4,6 +4,8 @@ import org.bukkit.Location;
 import ru.sparkcraft.eventhelper.EventHelper;
 import ru.sparkcraft.eventhelper.activators.*;
 
+import java.util.Objects;
+
 public class Plate extends Activator implements HaveLocation {
 
     private final Location location;

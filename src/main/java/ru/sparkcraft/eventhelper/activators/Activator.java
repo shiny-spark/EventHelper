@@ -75,20 +75,22 @@ public abstract class Activator {
 
     public static boolean removeActivator(EventHelper plugin, String owner, String name) {
         Activator activator = getActivator(owner, name);
-        plugin.getData().set(owner + "." + name, null);
-        //todo проверить правильность удаления из файла
-        plugin.saveData();
-        return getActivators(owner).remove(activator);
+        System.out.println(activator);
+        if (getActivators(owner).remove(activator)) {
+            plugin.getData().set(owner + "." + name, null);
+            plugin.saveData();
+            return true;
+        }
+        return false;
     }
 
     public static Activator getActivator(String owner, String name) {
-        try {
-            return activators.get(owner).stream()
-                    .filter(activator -> activator.getName().equals(name))
-                    .findFirst().orElse(null);
-        } catch (NullPointerException e) {
-            return null;
+        for (Activator activator : getActivators(owner)) {
+            if (activator.getName().equalsIgnoreCase(name)) {
+                return activator;
+            }
         }
+        return null;
     }
 
     public static Activator getActivator(Location location) {

@@ -2,10 +2,9 @@ package ru.sparkcraft.eventhelper.activators.objects;
 
 import org.bukkit.Location;
 import ru.sparkcraft.eventhelper.EventHelper;
-import ru.sparkcraft.eventhelper.activators.Activator;
-import ru.sparkcraft.eventhelper.activators.ActivatorType;
-import ru.sparkcraft.eventhelper.activators.EventProcessor;
-import ru.sparkcraft.eventhelper.activators.HaveLocation;
+import ru.sparkcraft.eventhelper.activators.*;
+
+import java.util.Objects;
 
 public class Chest extends Activator implements HaveLocation {
 
@@ -24,8 +23,13 @@ public class Chest extends Activator implements HaveLocation {
 
     @Override
     public boolean addEventProcessor(EventProcessor eventProcessor) {
+        if (eventProcessor.getEventType() == EventType.OPEN ||
+                eventProcessor.getEventType() == EventType.CLOSE ||
+                eventProcessor.getEventType() == EventType.PUT ||
+                eventProcessor.getEventType() == EventType.TAKE) {
+            getEventProcessors().add(eventProcessor);
+            return true;
+        }
         return false;
     }
-
-    // open, close, put, take
 }

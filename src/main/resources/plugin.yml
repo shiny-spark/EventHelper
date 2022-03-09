@@ -1,7 +1,7 @@
 name: EventHelper
 version: '${project.version}'
 main: ru.sparkcraft.eventhelper.EventHelper
-api-version: 1.16
+api-version: 1.18
 authors: [ Spark ]
 website: sparkcraft.ru
 depend: [ WorldGuard ]
