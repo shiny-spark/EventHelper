@@ -29,6 +29,7 @@ public class Commands implements CommandExecutor {
     private static final String CREATED = "Активатор создан под именем: ";
     private static final String ALREADY_EXISTS = "Активатор с таким именем уже существует.";
     private static final String NEED_TO_SELECT = "Сначала выберите активатор.";
+    private static final String INVALID_ARGUMENTS = "Неверные аргументы команды.";
 
     public Commands(EventHelper plugin) {
         this.plugin = plugin;
@@ -54,6 +55,19 @@ public class Commands implements CommandExecutor {
         return false;
     }
 
+    private void defaultCase(CommandSender sender, String[] args) {
+        if (args.length == 2) {
+            try {
+                EventType eventType = EventType.valueOf(args[0].toUpperCase(Locale.ROOT));
+                info(sender, args, eventType);
+            } catch (IllegalArgumentException e) {
+                sender.sendMessage(INVALID_ARGUMENTS);
+            }
+        } else {
+            help(sender);
+        }
+    }
+
     private void add(CommandSender sender, String[] args, int index) {
         try {
             Activator activator = selectedActivators.get(sender);
@@ -72,7 +86,7 @@ public class Commands implements CommandExecutor {
                     if (args[index + 2].equalsIgnoreCase("on") || args[index + 2].equalsIgnoreCase("off")) {
                         addAction(activator, eventType, actionType, sender, args[index + 2]);
                     } else {
-                        sender.sendMessage("Неверные аргументы команды.");
+                        sender.sendMessage(INVALID_ARGUMENTS);
                     }
                     return;
                 }
@@ -116,7 +130,7 @@ public class Commands implements CommandExecutor {
             }
         } catch (
                 IllegalArgumentException e) {
-            sender.sendMessage("Неверные аргументы команды.");
+            sender.sendMessage(INVALID_ARGUMENTS);
         }
     }
 
@@ -212,7 +226,7 @@ public class Commands implements CommandExecutor {
                 } catch (IndexOutOfBoundsException e) {
                     sender.sendMessage("Индекс выходит за диапазон значений.");
                 } catch (IllegalArgumentException e) {
-                    sender.sendMessage("Указаны неверные аргументы команды.");
+                    sender.sendMessage(INVALID_ARGUMENTS);
                 }
             } else {
                 sender.sendMessage(NEED_TO_SELECT);
@@ -276,11 +290,25 @@ public class Commands implements CommandExecutor {
             }
         } else if (args.length == 1) {
             Activator activator = selectedActivators.get(sender);
-            if (activator != null) {
+            if (isActivatorSelected(sender)) {
                 printActivatorInfo(sender, activator);
             } else {
                 sender.sendMessage("Выберите активатор или укажите имя.");
             }
+        }
+    }
+
+    private void info(CommandSender sender, String[] args, EventType eventType) {
+        //for ()
+    }
+
+    private boolean isActivatorSelected(CommandSender sender) {
+        Activator activator = selectedActivators.get(sender);
+        if (activator != null) {
+            return true;
+        } else {
+            sender.sendMessage("Выберите активатор или укажите имя.");
+            return false;
         }
     }
 
