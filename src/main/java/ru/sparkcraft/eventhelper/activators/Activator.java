@@ -85,9 +85,12 @@ public abstract class Activator {
     }
 
     public static Activator getActivator(String owner, String name) {
-        for (Activator activator : getActivators(owner)) {
-            if (activator.getName().equalsIgnoreCase(name)) {
-                return activator;
+        Set<Activator> activators = getActivators(owner);
+        if (activators != null) {
+            for (Activator activator : activators) {
+                if (activator.getName().equalsIgnoreCase(name)) {
+                    return activator;
+                }
             }
         }
         return null;

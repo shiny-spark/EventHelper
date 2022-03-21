@@ -37,31 +37,36 @@ public class Commands implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (args.length == 0) {
-            help(sender);
-        } else if (sender.hasPermission("e.commands")) {
-            switch (args[0]) {
-                case "create" -> create(sender, args);
-                case "add" -> add(sender, args, 1);
-                case "list" -> list(sender);
-                case "delete" -> delete(sender, args);
-                case "clear" -> clear(sender, args);
-                case "remove" -> remove(sender, args);
-                case "select" -> select(sender, args);
-                case "info" -> info(sender, args);
-                default -> add(sender, args, 0);
+        if (sender instanceof Player && sender.hasPermission("e.commands")) {
+            if (args.length == 0) {
+                help(sender);
+            } else {
+                switch (args[0]) {
+                    case "create" -> create(sender, args);
+                    case "add" -> add(sender, args, 1);
+                    case "list" -> list(sender);
+                    case "delete" -> delete(sender, args);
+                    case "clear" -> clear(sender, args);
+                    case "remove" -> remove(sender, args);
+                    case "select" -> select(sender, args);
+                    case "info" -> info(sender, args);
+                    default -> add(sender, args, 0);
+                }
             }
+            return false;
         }
         return false;
     }
 
     private void defaultCase(CommandSender sender, String[] args) {
         if (args.length == 2) {
-            try {
-                EventType eventType = EventType.valueOf(args[0].toUpperCase(Locale.ROOT));
-                info(sender, args, eventType);
-            } catch (IllegalArgumentException e) {
-                sender.sendMessage(INVALID_ARGUMENTS);
+            if (isActivatorSelected(sender)) {
+                try {
+                    EventType eventType = EventType.valueOf(args[0].toUpperCase(Locale.ROOT));
+                    printEventProcessorInfo(sender, selectedActivators.get(sender).getEventProcessor(eventType));
+                } catch (IllegalArgumentException e) {
+                    sender.sendMessage(INVALID_ARGUMENTS);
+                }
             }
         } else {
             help(sender);
@@ -298,10 +303,6 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void info(CommandSender sender, String[] args, EventType eventType) {
-        //for ()
-    }
-
     private boolean isActivatorSelected(CommandSender sender) {
         Activator activator = selectedActivators.get(sender);
         if (activator != null) {
@@ -316,15 +317,19 @@ public class Commands implements CommandExecutor {
         if (!activator.getEventProcessors().isEmpty()) {
             sender.sendMessage("Активатор: " + activator.getName());
             for (EventProcessor eventProcessor : activator.getEventProcessors()) {
-                sender.sendMessage(" " + eventProcessor.getEventType().name() + ":");
-                int index = 0;
-                for (EventProcessor.Action action : eventProcessor.getActionsQueue()) {
-                    String result = action.getValue() == null ? action.getActionType().name() : action.getActionType().name() + ": " + action.getValue();
-                    sender.sendMessage("  - " + (index++) + ". " + result);
-                }
+                printEventProcessorInfo(sender, eventProcessor);
             }
         } else {
             sender.sendMessage("Активатор еще не настроен.");
+        }
+    }
+
+    private void printEventProcessorInfo(CommandSender sender, EventProcessor eventProcessor) {
+        sender.sendMessage(" " + eventProcessor.getEventType().name() + ":");
+        int index = 0;
+        for (EventProcessor.Action action : eventProcessor.getActionsQueue()) {
+            String result = action.getValue() == null ? action.getActionType().name() : action.getActionType().name() + ": " + action.getValue();
+            sender.sendMessage("  - " + (index++) + ". " + result);
         }
     }
 
