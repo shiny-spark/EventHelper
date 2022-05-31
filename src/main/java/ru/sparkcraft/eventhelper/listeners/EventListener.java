@@ -1,11 +1,9 @@
 package ru.sparkcraft.eventhelper.listeners;
 
-import de.netzkronehd.wgregionevents.events.RegionEnterEvent;
-import de.netzkronehd.wgregionevents.events.RegionLeaveEvent;
-import org.bukkit.Location;
+import net.raidstone.wgevents.events.RegionEnteredEvent;
+import net.raidstone.wgevents.events.RegionLeftEvent;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.type.Switch;
 import org.bukkit.entity.Player;
@@ -80,12 +78,12 @@ public class EventListener implements Listener {
     }
 
     @EventHandler // Region ENTER
-    public void onRegionEnter(RegionEnterEvent event) {
+    public void onRegionEnter(RegionEnteredEvent event) {
         runActions(Activator.getActivator(event.getRegion().getId()), event.getPlayer(), EventType.ENTER);
     }
 
     @EventHandler // Region LEAVE
-    public void onRegionLeave(RegionLeaveEvent event) {
+    public void onRegionLeave(RegionLeftEvent event) {
         runActions(Activator.getActivator(event.getRegion().getId()), event.getPlayer(), EventType.LEAVE);
     }
 

@@ -58,7 +58,7 @@ public class Commands implements CommandExecutor {
         return false;
     }
 
-    private void defaultCase(CommandSender sender, String[] args) {
+    private void defaultCase(CommandSender sender, String @NotNull [] args) {
         if (args.length == 2) {
             if (isActivatorSelected(sender)) {
                 try {
@@ -73,7 +73,7 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void add(CommandSender sender, String[] args, int index) {
+    private void add(CommandSender sender, String @NotNull [] args, int index) {
         try {
             Activator activator = selectedActivators.get(sender);
             EventType eventType = EventType.valueOf(args[index].toUpperCase(Locale.ROOT));
@@ -88,8 +88,9 @@ public class Commands implements CommandExecutor {
                 }
 
                 if (args.length > index + 2 && actionType == ActionType.FLY) {
-                    if (args[index + 2].equalsIgnoreCase("on") || args[index + 2].equalsIgnoreCase("off")) {
-                        addAction(activator, eventType, actionType, sender, args[index + 2]);
+                    String value = args[index + 2];
+                    if (value.equalsIgnoreCase("on") || value.equalsIgnoreCase("off")) {
+                        addAction(activator, eventType, actionType, sender, value);
                     } else {
                         sender.sendMessage(INVALID_ARGUMENTS);
                     }
@@ -104,28 +105,30 @@ public class Commands implements CommandExecutor {
                     }
                     String finalValue = value.toString().trim();
 
-                    if (actionType == ActionType.TP &&
-                            (args.length == index + 5 || args.length == index + 6)) {
-                        try {
-                            Double.parseDouble(args[index + 2]);
-                            Double.parseDouble(args[index + 3]);
-                            Double.parseDouble(args[index + 4]);
-                            World world = Bukkit.getWorld(args[index + 5]);
-                            if (world == null) {
-                                sender.sendMessage("Неверное название мира.");
+                    if (actionType == ActionType.TP) {
+                        if (args.length == index + 5 || args.length == index + 6) {
+                            try {
+                                Double.parseDouble(args[index + 2]);
+                                Double.parseDouble(args[index + 3]);
+                                Double.parseDouble(args[index + 4]);
+                                World world = Bukkit.getWorld(args[index + 5]);
+                                if (world == null) {
+                                    sender.sendMessage("Неверное название мира.");
+                                    return;
+                                }
+                            } catch (NumberFormatException e) {
+                                sender.sendMessage("Неверно указаны координаты.");
                                 return;
+                            } catch (ArrayIndexOutOfBoundsException e) {
+                                // Если не указан мир в команде, берем мир, в котором находится игрок
+                                finalValue = finalValue + " " + ((Player) sender).getWorld().getName();
                             }
-                        } catch (NumberFormatException e) {
-                            sender.sendMessage("Неверно указаны координаты.");
+                        } else {
+                            sender.sendMessage("Недостаточно аргументов.");
                             return;
-                        } catch (ArrayIndexOutOfBoundsException e) {
-                            // Если не указан мир в команде, берем мир, в котором находится игрок
-                            finalValue = finalValue + " " + ((Player) sender).getWorld().getName();
                         }
-                    } else {
-                        sender.sendMessage("Недостаточно аргументов.");
-                        return;
                     }
+
                     addAction(activator, eventType, actionType, sender, finalValue);
                 } else {
                     sender.sendMessage("Недостаточно аргументов.");
@@ -139,7 +142,7 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void addAction(Activator activator, EventType eventType, ActionType actionType, CommandSender sender, String value) {
+    private void addAction(@NotNull Activator activator, EventType eventType, ActionType actionType, CommandSender sender, String value) {
         if (activator.addEventProcessor(new EventProcessor(activator, eventType, plugin))) {
             activator.getEventProcessor(eventType).addAction(actionType, value);
             sender.sendMessage("Добавлено действие " + actionType + " к событию " + eventType + " активатора " + activator.getName());
@@ -148,7 +151,7 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void create(CommandSender sender, String[] args) {
+    private void create(CommandSender sender, String @NotNull [] args) {
         if (args.length == 2) {
             Player player = (Player) sender;
             Block block = player.getTargetBlock(null, 5);
@@ -171,12 +174,13 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void createActivator(CommandSender sender, String activatorName, Location location, ActivatorType activatorType) {
+    private void createActivator(@NotNull CommandSender sender, String activatorName, Location location, ActivatorType activatorType) {
         String owner = sender.getName();
         if (Activator.getActivator(owner, activatorName) == null) {
             sender.sendMessage(CREATED + activatorName);
             switch (activatorType) {
-                case BUTTON -> selectActivator(sender, new Button(plugin, owner, activatorType, activatorName, location));
+                case BUTTON ->
+                        selectActivator(sender, new Button(plugin, owner, activatorType, activatorName, location));
                 case CHEST -> selectActivator(sender, new Chest(plugin, owner, activatorType, activatorName, location));
                 case DOOR -> selectActivator(sender, new Door(plugin, owner, activatorType, activatorName, location));
                 case LEVER -> selectActivator(sender, new Lever(plugin, owner, activatorType, activatorName, location));
@@ -188,7 +192,7 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void createActivator(CommandSender sender, String activatorName, ActivatorType activatorType, String regionName) {
+    private void createActivator(@NotNull CommandSender sender, String activatorName, ActivatorType activatorType, String regionName) {
         String owner = sender.getName();
         if (Activator.getActivator(owner, activatorName) == null) {
             sender.sendMessage(CREATED + activatorName);
@@ -216,7 +220,7 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void delete(CommandSender sender, String[] args) {
+    private void delete(CommandSender sender, String @NotNull [] args) {
         if (args.length == 3) {
             Activator activator = selectedActivators.get(sender);
             if (activator != null) {
@@ -239,7 +243,7 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void remove(CommandSender sender, String[] args) {
+    private void remove(CommandSender sender, String @NotNull [] args) {
         if (args.length == 2) {
             if (Activator.removeActivator(plugin, sender.getName(), args[1])) {
                 sender.sendMessage("Активатор успешно удален.");
@@ -249,7 +253,7 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void clear(CommandSender sender, String[] args) {
+    private void clear(CommandSender sender, String @NotNull [] args) {
         if (args.length == 2) {
             Activator activator = selectedActivators.get(sender);
             if (activator != null) {
@@ -269,7 +273,7 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void select(CommandSender sender, String[] args) {
+    private void select(CommandSender sender, String @NotNull [] args) {
         if (args.length == 2) {
             Activator activator = Activator.getActivator(sender.getName(), args[1]);
             selectActivator(sender, activator);
@@ -285,7 +289,7 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void info(CommandSender sender, String[] args) {
+    private void info(CommandSender sender, String @NotNull [] args) {
         if (args.length == 2) {
             Activator activator = Activator.getActivator(sender.getName(), args[1]);
             if (activator != null) {
@@ -313,7 +317,7 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void printActivatorInfo(CommandSender sender, Activator activator) {
+    private void printActivatorInfo(CommandSender sender, @NotNull Activator activator) {
         if (!activator.getEventProcessors().isEmpty()) {
             sender.sendMessage("Активатор: " + activator.getName());
             for (EventProcessor eventProcessor : activator.getEventProcessors()) {
@@ -324,7 +328,7 @@ public class Commands implements CommandExecutor {
         }
     }
 
-    private void printEventProcessorInfo(CommandSender sender, EventProcessor eventProcessor) {
+    private void printEventProcessorInfo(@NotNull CommandSender sender, @NotNull EventProcessor eventProcessor) {
         sender.sendMessage(" " + eventProcessor.getEventType().name() + ":");
         int index = 0;
         for (EventProcessor.Action action : eventProcessor.getActionsQueue()) {
