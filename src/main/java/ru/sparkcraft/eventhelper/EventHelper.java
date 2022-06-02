@@ -1,5 +1,6 @@
 package ru.sparkcraft.eventhelper;
 
+import com.sk89q.commandbook.CommandBook;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -12,6 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import ru.sparkcraft.eventhelper.activators.*;
 import ru.sparkcraft.eventhelper.activators.objects.*;
 import ru.sparkcraft.eventhelper.commands.Commands;
+import ru.sparkcraft.eventhelper.commands.CommandsTabCompleter;
 import ru.sparkcraft.eventhelper.listeners.EventListener;
 
 import java.io.File;
@@ -31,6 +33,7 @@ public final class EventHelper extends JavaPlugin {
         PluginCommand command = getCommand("e");
         if (command != null) {
             command.setExecutor(new Commands(this));
+            command.setTabCompleter(new CommandsTabCompleter());
         }
 
         EventListener eventListener = new EventListener();

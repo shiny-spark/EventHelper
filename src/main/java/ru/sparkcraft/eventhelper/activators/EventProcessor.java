@@ -1,5 +1,8 @@
 package ru.sparkcraft.eventhelper.activators;
 
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -76,7 +79,11 @@ public class EventProcessor {
                                 action.value.replace("%player%", player.getName()));
                         break;
                     case MESSAGE:
-                        player.sendMessage(action.value.replace("%player%", player.getName()));
+                        Audience pl = (Audience) player;
+                        String message = action.value.replace("%player%", player.getName());
+                        var mm = MiniMessage.miniMessage();
+                        Component parsed = mm.deserialize(message);
+                        pl.sendMessage(parsed);
                         break;
                     case TP:
                         String[] args = action.value.split(" ");
@@ -108,7 +115,13 @@ public class EventProcessor {
                         player.getInventory().removeItem(itemStack);
                         break;
                     case ANNOUNCE:
-                        Bukkit.broadcastMessage(action.value.replace("%player%", player.getName()));
+                        for (Player ply : Bukkit.getOnlinePlayers()) {
+                            pl = (Audience) ply;
+                            message = action.value.replace("%player%", player.getName());
+                            mm = MiniMessage.miniMessage();
+                            parsed = mm.deserialize(message);
+                            pl.sendMessage(parsed);
+                        }
                         break;
                     case FLY:
                         if (action.value.equalsIgnoreCase("on")) {
@@ -166,5 +179,3 @@ public class EventProcessor {
         plugin.saveData();
     }
 }
-
-
