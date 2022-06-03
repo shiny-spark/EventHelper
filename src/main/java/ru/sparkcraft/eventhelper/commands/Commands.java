@@ -6,21 +6,22 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
+import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import ru.sparkcraft.eventhelper.EventHelper;
 import ru.sparkcraft.eventhelper.activators.*;
 import ru.sparkcraft.eventhelper.activators.objects.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class Commands implements CommandExecutor {
-
+public class Commands implements TabExecutor {
+    private static final String[] COMMANDS = {"create", "add", "list", "delete", "clear", "remove", "select", "info"};
     private final EventHelper plugin;
     private final Map<CommandSender, Activator> selectedActivators = new HashMap<>();
 
@@ -29,6 +30,8 @@ public class Commands implements CommandExecutor {
     private static final String CREATED = "Активатор создан под именем: ";
     private static final String ALREADY_EXISTS = "Активатор с таким именем уже существует.";
     private static final String NEED_TO_SELECT = "Сначала выберите активатор.";
+
+    private static final String NEED_TO_SELECT_OR_NAME = "Выберите активатор или укажите имя.";
     private static final String INVALID_ARGUMENTS = "Неверные аргументы команды.";
 
     public Commands(EventHelper plugin) {
@@ -67,6 +70,8 @@ public class Commands implements CommandExecutor {
                 } catch (IllegalArgumentException e) {
                     sender.sendMessage(INVALID_ARGUMENTS);
                 }
+            } else {
+                sender.sendMessage(NEED_TO_SELECT_OR_NAME);
             }
         } else {
             help(sender);
@@ -302,19 +307,14 @@ public class Commands implements CommandExecutor {
             if (isActivatorSelected(sender)) {
                 printActivatorInfo(sender, activator);
             } else {
-                sender.sendMessage("Выберите активатор или укажите имя.");
+                sender.sendMessage(NEED_TO_SELECT_OR_NAME);
             }
         }
     }
 
     private boolean isActivatorSelected(CommandSender sender) {
         Activator activator = selectedActivators.get(sender);
-        if (activator != null) {
-            return true;
-        } else {
-            sender.sendMessage("Выберите активатор или укажите имя.");
-            return false;
-        }
+        return activator != null;
     }
 
     private void printActivatorInfo(CommandSender sender, @NotNull Activator activator) {
@@ -342,5 +342,84 @@ public class Commands implements CommandExecutor {
         for (String message : messages) {
             sender.sendMessage(message);
         }
+    }
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
+        final List<String> completions = new ArrayList<>();
+        switch (args.length) {
+            case 1:
+                if (isActivatorSelected(sender)) {
+                    StringUtil.copyPartialMatches(args[0],
+                            Stream.of(EventType.values())
+                                    .map(EventType::name)
+                                    .collect(Collectors.toList()),
+                            completions);
+                }
+
+                StringUtil.copyPartialMatches(args[0], Arrays.asList(COMMANDS), completions);
+                break;
+
+            case 2:
+                switch (args[0]) {
+                    case "create":
+                        return Collections.singletonList("[имя активатора]");
+
+                    case "clear", "add", "delete":
+                        StringUtil.copyPartialMatches(args[1],
+                                Arrays.stream(EventType.values())
+                                        .map(EventType::name)
+                                        .collect(Collectors.toList()),
+                                completions);
+                        break;
+
+                    case "remove", "select", "info":
+                        StringUtil.copyPartialMatches(args[1],
+                                Activator.getActivators(sender.getName())
+                                        .stream()
+                                        .map(Activator::getName)
+                                        .collect(Collectors.toList()),
+                                completions);
+                        break;
+                }
+
+                if (Arrays.stream(EventType.values())
+                        .map(EventType::name)
+                        .toList()
+                        .contains(args[0]) && isActivatorSelected(sender)) {
+                    StringUtil.copyPartialMatches(args[1],
+                            Stream.of(ActionType.values())
+                                    .map(ActionType::name)
+                                    .collect(Collectors.toList()),
+                            completions);
+                }
+                break;
+
+            case 3:
+                switch (args[0]) {
+                    case "create":
+                        return Collections.singletonList("region");
+
+                    case "add":
+                        StringUtil.copyPartialMatches(args[2],
+                                Stream.of(ActionType.values())
+                                        .map(ActionType::name)
+                                        .collect(Collectors.toList()),
+                                completions);
+                        break;
+
+                    case "delete":
+                        return Collections.singletonList("[индекс действия]");
+                }
+                break;
+
+            case 4:
+                if (args[2].equals("region")) {
+                    return Collections.singletonList("[название региона]");
+                }
+                break;
+        }
+
+        return completions;
     }
 }

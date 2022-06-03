@@ -75,7 +75,6 @@ public abstract class Activator {
 
     public static boolean removeActivator(EventHelper plugin, String owner, String name) {
         Activator activator = getActivator(owner, name);
-        System.out.println(activator);
         if (getActivators(owner).remove(activator)) {
             plugin.getData().set(owner + "." + name, null);
             plugin.saveData();
