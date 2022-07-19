@@ -57,7 +57,7 @@ public class Commands implements TabExecutor {
                 }
             }
             return false;
-        }
+        } sender.sendMessage("У вас нет прав.");
         return false;
     }
 
@@ -102,6 +102,22 @@ public class Commands implements TabExecutor {
                     return;
                 }
 
+                if (args.length > index + 2 && actionType == ActionType.META) {
+                    String metaAction = args[index + 2];
+                    switch (metaAction) {
+                        case "set":
+                            break;
+                        case "unset":
+                            break;
+                        case "add":
+                            break;
+                        case "subtract":
+                            break;
+                        default:
+                            sender.sendMessage("Неизвестное действие для META: " + metaAction);
+                    }
+                }
+
                 if (args.length > index + 2 && !noArgumentsNeeded) {
 
                     StringBuilder value = new StringBuilder();
@@ -133,7 +149,6 @@ public class Commands implements TabExecutor {
                             return;
                         }
                     }
-
                     addAction(activator, eventType, actionType, sender, finalValue);
                 } else {
                     sender.sendMessage("Недостаточно аргументов.");
@@ -172,10 +187,18 @@ public class Commands implements TabExecutor {
             } else {
                 player.sendMessage("Данный тип блока не может быть активатором.");
             }
-        } else if (args.length == 4 && args[2].equals("region")) {
+
+        } else if (args.length == 3 && args[2].equalsIgnoreCase("EXECUTOR")) {
+            String activatorName = args[1];
+            createExecActivator(sender, activatorName);
+
+        } else if (args.length == 4 && args[2].equalsIgnoreCase("REGION")) {
             String activatorName = args[1];
             String regionName = args[3];
-            createActivator(sender, activatorName, ActivatorType.REGION, regionName);
+            createRegionActivator(sender, activatorName, regionName);
+
+        } else {
+            sender.sendMessage("Неверные атрибуты команды");
         }
     }
 
@@ -184,12 +207,11 @@ public class Commands implements TabExecutor {
         if (Activator.getActivator(owner, activatorName) == null) {
             sender.sendMessage(CREATED + activatorName);
             switch (activatorType) {
-                case BUTTON ->
-                        selectActivator(sender, new Button(plugin, owner, activatorType, activatorName, location));
-                case CHEST -> selectActivator(sender, new Chest(plugin, owner, activatorType, activatorName, location));
-                case DOOR -> selectActivator(sender, new Door(plugin, owner, activatorType, activatorName, location));
-                case LEVER -> selectActivator(sender, new Lever(plugin, owner, activatorType, activatorName, location));
-                case PLATE -> selectActivator(sender, new Plate(plugin, owner, activatorType, activatorName, location));
+                case BUTTON -> selectActivator(sender, new Button(plugin, owner, activatorName, location));
+                case CHEST -> selectActivator(sender, new Chest(plugin, owner, activatorName, location));
+                case DOOR -> selectActivator(sender, new Door(plugin, owner, activatorName, location));
+                case LEVER -> selectActivator(sender, new Lever(plugin, owner, activatorName, location));
+                case PLATE -> selectActivator(sender, new Plate(plugin, owner, activatorName, location));
                 default -> throw new IllegalStateException("Unexpected value: " + activatorType);
             }
         } else {
@@ -197,13 +219,21 @@ public class Commands implements TabExecutor {
         }
     }
 
-    private void createActivator(@NotNull CommandSender sender, String activatorName, ActivatorType activatorType, String regionName) {
+    private void createRegionActivator(@NotNull CommandSender sender, String activatorName, String regionName) {
         String owner = sender.getName();
         if (Activator.getActivator(owner, activatorName) == null) {
             sender.sendMessage(CREATED + activatorName);
-            if (activatorType == ActivatorType.REGION) {
-                selectActivator(sender, new Region(plugin, owner, activatorType, activatorName, regionName));
-            }
+            selectActivator(sender, new Region(plugin, owner, activatorName, regionName));
+        } else {
+            sender.sendMessage(ALREADY_EXISTS);
+        }
+    }
+
+    private void createExecActivator(@NotNull CommandSender sender, String activatorName) {
+        String owner = sender.getName();
+        if (Activator.getActivator(owner, activatorName) == null) {
+            sender.sendMessage(CREATED + activatorName);
+            selectActivator(sender, new Executor(plugin, owner, activatorName));
         } else {
             sender.sendMessage(ALREADY_EXISTS);
         }
@@ -363,7 +393,7 @@ public class Commands implements TabExecutor {
             case 2:
                 switch (args[0]) {
                     case "create":
-                        return Collections.singletonList("[имя активатора]");
+                        return Collections.singletonList("<имя активатора>");
 
                     case "clear", "add", "delete":
                         StringUtil.copyPartialMatches(args[1],
@@ -398,7 +428,9 @@ public class Commands implements TabExecutor {
             case 3:
                 switch (args[0]) {
                     case "create":
-                        return Collections.singletonList("region");
+                        StringUtil.copyPartialMatches(args[2],
+                                Arrays.asList("REGION", "EXECUTOR"),
+                                completions);
 
                     case "add":
                         StringUtil.copyPartialMatches(args[2],
@@ -409,13 +441,13 @@ public class Commands implements TabExecutor {
                         break;
 
                     case "delete":
-                        return Collections.singletonList("[индекс действия]");
+                        return Collections.singletonList("<индекс действия>");
                 }
                 break;
 
             case 4:
                 if (args[2].equals("region")) {
-                    return Collections.singletonList("[название региона]");
+                    return Collections.singletonList("<название региона>");
                 }
                 break;
         }

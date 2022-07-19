@@ -4,7 +4,7 @@ main: ru.sparkcraft.eventhelper.EventHelper
 api-version: 1.18
 authors: [ Spark ]
 website: sparkcraft.ru
-depend: [ WorldGuard ]
+depend: [ WorldGuard, WorldGuardEvents]
 commands:
   eventhelper:
     description: no

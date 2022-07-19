@@ -10,8 +10,8 @@ public class Chest extends Activator implements HaveLocation {
 
     private final Location location;
 
-    public Chest(EventHelper plugin, String owner, ActivatorType type, String name, Location location) {
-        super(plugin, owner, type, name);
+    public Chest(EventHelper plugin, String owner, String name, Location location) {
+        super(plugin, owner, ActivatorType.CHEST, name);
         this.location = location;
         saveToFile(plugin, this);
     }

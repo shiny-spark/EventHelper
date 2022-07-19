@@ -10,8 +10,8 @@ public class Lever extends Activator implements HaveLocation {
 
     private final Location location;
 
-    public Lever(EventHelper plugin, String owner, ActivatorType type, String name, Location location) {
-        super(plugin, owner, type, name);
+    public Lever(EventHelper plugin, String owner, String name, Location location) {
+        super(plugin, owner, ActivatorType.LEVER, name);
         this.location = location;
         saveToFile(plugin, this);
     }

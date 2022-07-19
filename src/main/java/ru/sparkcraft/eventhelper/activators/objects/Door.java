@@ -12,8 +12,8 @@ public class Door extends Activator implements HaveLocation {
 
     private final Location location;
 
-    public Door(EventHelper plugin, String owner, ActivatorType type, String name, Location location) {
-        super(plugin, owner, type, name);
+    public Door(EventHelper plugin, String owner, String name, Location location) {
+        super(plugin, owner, ActivatorType.DOOR, name);
         this.location = location;
         saveToFile(plugin, this);
     }

@@ -35,8 +35,7 @@ public abstract class Activator {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Activator)) return false;
-        Activator activator = (Activator) o;
+        if (!(o instanceof Activator activator)) return false;
         return name.equals(activator.name);
     }
 

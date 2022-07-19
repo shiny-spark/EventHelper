@@ -68,84 +68,87 @@ public class EventProcessor {
     }
 
     public void processQueue(Player player, int index) {
-        Action action;
-        do {
-            action = actionsQueue.get(index++);
-            if (action.actionType != ActionType.DELAY) {
+        if (!actionsQueue.isEmpty()) {
+            Action action;
+            do {
+                action = actionsQueue.get(index++);
+                if (action.actionType != ActionType.DELAY) {
 
-                switch (action.actionType) {
-                    case COMMAND:
-                        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                                action.value.replace("%player%", player.getName()));
-                        break;
-                    case MESSAGE:
-                        Audience pl = (Audience) player;
-                        String message = action.value.replace("%player%", player.getName());
-                        var mm = MiniMessage.miniMessage();
-                        Component parsed = mm.deserialize(message);
-                        pl.sendMessage(parsed);
-                        break;
-                    case TP:
-                        String[] args = action.value.split(" ");
-                        World w = Bukkit.getWorld(args[3]);
-                        double x = Double.parseDouble(args[0]);
-                        double y = Double.parseDouble(args[1]);
-                        double z = Double.parseDouble(args[2]);
-                        player.teleport(new Location(w, x, y, z));
-                        break;
-                    case EFFECT:
-                        // player.addPotionEffect(new PotionEffect());
-                        break;
-                    case KILL:
-                        player.setHealth(0);
-                        break;
-                    case HEALTH:
-                        player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
-                        break;
-                    case GIVE:
-                        args = action.value.split(" ");
-                        Material material = Material.valueOf(args[0].toUpperCase());
-                        ItemStack itemStack = new ItemStack(material, Integer.parseInt(args[1]));
-                        player.getInventory().addItem(itemStack);
-                        break;
-                    case TAKE:
-                        args = action.value.split(" ");
-                        material = Material.valueOf(args[0].toUpperCase());
-                        itemStack = new ItemStack(material, Integer.parseInt(args[1]));
-                        player.getInventory().removeItem(itemStack);
-                        break;
-                    case ANNOUNCE:
-                        for (Player ply : Bukkit.getOnlinePlayers()) {
-                            pl = (Audience) ply;
-                            message = action.value.replace("%player%", player.getName());
-                            mm = MiniMessage.miniMessage();
-                            parsed = mm.deserialize(message);
+                    switch (action.actionType) {
+                        case COMMAND:
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                                    action.value.replace("%player%", player.getName()));
+                            break;
+                        case MESSAGE:
+                            Audience pl = (Audience) player;
+                            String message = action.value.replace("%player%", player.getName());
+                            var mm = MiniMessage.miniMessage();
+                            Component parsed = mm.deserialize(message);
                             pl.sendMessage(parsed);
-                        }
-                        break;
-                    case FLY:
-                        if (action.value.equalsIgnoreCase("on")) {
-                            player.setAllowFlight(true);
-                            player.setFlying(true);
-                        } else if (action.value.equalsIgnoreCase("off")) {
-                            player.setAllowFlight(false);
-                            player.setFlying(false);
-                        }
-                        break;
-                    case TAG:
-                        break;
-                }
+                            break;
+                        case TP:
+                            String[] args = action.value.split(" ");
+                            World w = Bukkit.getWorld(args[3]);
+                            double x = Double.parseDouble(args[0]);
+                            double y = Double.parseDouble(args[1]);
+                            double z = Double.parseDouble(args[2]);
+                            player.teleport(new Location(w, x, y, z));
+                            break;
+                        case EFFECT:
+                            // player.addPotionEffect(new PotionEffect());
+                            break;
+                        case KILL:
+                            player.setHealth(0);
+                            break;
+                        case HEALTH:
+                            player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+                            break;
+                        case GIVE:
+                            args = action.value.split(" ");
+                            Material material = Material.valueOf(args[0].toUpperCase());
+                            ItemStack itemStack = new ItemStack(material, Integer.parseInt(args[1]));
+                            player.getInventory().addItem(itemStack);
+                            break;
+                        case TAKE:
+                            args = action.value.split(" ");
+                            material = Material.valueOf(args[0].toUpperCase());
+                            itemStack = new ItemStack(material, Integer.parseInt(args[1]));
+                            player.getInventory().removeItem(itemStack);
+                            break;
+                        case ANNOUNCE:
+                            for (Player ply : Bukkit.getOnlinePlayers()) {
+                                pl = (Audience) ply;
+                                message = action.value.replace("%player%", player.getName());
+                                mm = MiniMessage.miniMessage();
+                                parsed = mm.deserialize(message);
+                                pl.sendMessage(parsed);
+                            }
+                            break;
+                        case FLY:
+                            if (action.value.equalsIgnoreCase("on")) {
+                                player.setAllowFlight(true);
+                                player.setFlying(true);
+                            } else if (action.value.equalsIgnoreCase("off")) {
+                                player.setAllowFlight(false);
+                                player.setFlying(false);
+                            }
+                            break;
+                        case META:
 
-            } else if (index < actionsQueue.size()) {
-                int finalIndex = index;
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        processQueue(player, finalIndex);
+                            break;
                     }
-                }.runTaskLater(plugin, 20L * Long.parseLong(action.value));
-            }
-        } while (action.actionType != ActionType.DELAY && index < actionsQueue.size());
+
+                } else if (index < actionsQueue.size()) {
+                    int finalIndex = index;
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            processQueue(player, finalIndex);
+                        }
+                    }.runTaskLater(plugin, 20L * Long.parseLong(action.value));
+                }
+            } while (action.actionType != ActionType.DELAY && index < actionsQueue.size());
+        }
     }
 
     public void addAction(ActionType actionType, String value) {

@@ -1,5 +1,6 @@
 package ru.sparkcraft.eventhelper;
 
+import net.luckperms.api.LuckPerms;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -8,6 +9,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import ru.sparkcraft.eventhelper.activators.*;
 import ru.sparkcraft.eventhelper.activators.objects.*;
@@ -27,6 +29,11 @@ public final class EventHelper extends JavaPlugin {
 
     @Override
     public void onEnable() {
+
+        RegisteredServiceProvider<LuckPerms> luckPermsProvider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
+        if (luckPermsProvider != null) {
+            LuckPerms api = luckPermsProvider.getProvider();
+        }
 
         PluginCommand command = getCommand("e");
         if (command != null) {
@@ -89,15 +96,15 @@ public final class EventHelper extends JavaPlugin {
                     Location location = new Location(w, x, y, z);
 
                     switch (activatorType) {
-                        case LEVER -> loadActivator(nick, activatorName, new Lever(this, nick, ActivatorType.LEVER, activatorName, location));
-                        case CHEST -> loadActivator(nick, activatorName, new Chest(this, nick, ActivatorType.CHEST, activatorName, location));
-                        case DOOR -> loadActivator(nick, activatorName, new Door(this, nick, ActivatorType.DOOR, activatorName, location));
-                        case BUTTON -> loadActivator(nick, activatorName, new Button(this, nick, ActivatorType.BUTTON, activatorName, location));
-                        case PLATE -> loadActivator(nick, activatorName, new Plate(this, nick, ActivatorType.PLATE, activatorName, location));
+                        case LEVER -> loadActivator(nick, activatorName, new Lever(this, nick, activatorName, location));
+                        case CHEST -> loadActivator(nick, activatorName, new Chest(this, nick, activatorName, location));
+                        case DOOR -> loadActivator(nick, activatorName, new Door(this, nick, activatorName, location));
+                        case BUTTON -> loadActivator(nick, activatorName, new Button(this, nick, activatorName, location));
+                        case PLATE -> loadActivator(nick, activatorName, new Plate(this, nick, activatorName, location));
                     }
                 } else {
                     String regionName = getData().getString(nick + "." + activatorName + ".regionName");
-                    loadActivator(nick, activatorName, new Region(this, nick, ActivatorType.REGION, activatorName, regionName));
+                    loadActivator(nick, activatorName, new Region(this, nick, activatorName, regionName));
                 }
             }
         }

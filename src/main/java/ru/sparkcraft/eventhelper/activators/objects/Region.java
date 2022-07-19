@@ -12,8 +12,8 @@ public class Region extends Activator {
 
     private final String regionName;
 
-    public Region(EventHelper plugin, String owner, ActivatorType type, String name, String regionName) {
-        super(plugin, owner, type, name);
+    public Region(EventHelper plugin, String owner, String name, String regionName) {
+        super(plugin, owner, ActivatorType.REGION, name);
         this.regionName = regionName;
         saveToFile(plugin, this);
     }

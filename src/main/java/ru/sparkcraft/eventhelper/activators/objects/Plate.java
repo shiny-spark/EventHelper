@@ -10,8 +10,8 @@ public class Plate extends Activator implements HaveLocation {
 
     private final Location location;
 
-    public Plate(EventHelper plugin, String owner, ActivatorType type, String name, Location location) {
-        super(plugin, owner, type, name);
+    public Plate(EventHelper plugin, String owner, String name, Location location) {
+        super(plugin, owner, ActivatorType.PLATE, name);
         this.location = location;
         saveToFile(plugin, this);
     }

@@ -10,8 +10,8 @@ public class Button extends Activator implements HaveLocation {
 
     private final Location location;
 
-    public Button(EventHelper plugin, String owner, ActivatorType type, String name, Location location) {
-        super(plugin, owner, type, name);
+    public Button(EventHelper plugin, String owner, String name, Location location) {
+        super(plugin, owner, ActivatorType.BUTTON, name);
         this.location = location;
         saveToFile(plugin, this);
     }
