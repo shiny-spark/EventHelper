@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Commands implements TabExecutor {
-    private static final String[] COMMANDS = {"create", "add", "list", "delete", "clear", "remove", "select", "info"};
+    private static final String[] COMMANDS = {"create", "add", "list", "delete", "clear", "remove", "select", "info", "execute"};
     private final EventHelper plugin;
     private final Map<CommandSender, Activator> selectedActivators = new HashMap<>();
 
@@ -53,11 +53,13 @@ public class Commands implements TabExecutor {
                     case "remove" -> remove(sender, args);
                     case "select" -> select(sender, args);
                     case "info" -> info(sender, args);
+                    case "execute" -> execute(sender, args);
                     default -> add(sender, args, 0);
                 }
             }
             return false;
-        } sender.sendMessage("У вас нет прав.");
+        }
+        sender.sendMessage("У вас нет прав.");
         return false;
     }
 
@@ -106,6 +108,7 @@ public class Commands implements TabExecutor {
                     String metaAction = args[index + 2];
                     switch (metaAction) {
                         case "set":
+                            sender.sendMessage("set");
                             break;
                         case "unset":
                             break;
@@ -342,6 +345,23 @@ public class Commands implements TabExecutor {
         }
     }
 
+    private void execute(CommandSender sender, String @NotNull [] args) {
+        if (args.length == 3) {
+            Activator activator = Activator.getActivator(sender.getName(), args[1]);
+            if (activator != null) {
+                EventProcessor eventProcessor = activator.getEventProcessor(EventType.RUN);
+                if (eventProcessor != null) {
+                    Player player = Bukkit.getPlayer(args[2]);
+                    if (player != null) {
+                        eventProcessor.run(player);
+                    }
+                }
+            } else {
+                sender.sendMessage(NOT_FOUND);
+            }
+        }
+    }
+
     private boolean isActivatorSelected(CommandSender sender) {
         Activator activator = selectedActivators.get(sender);
         return activator != null;
@@ -431,6 +451,7 @@ public class Commands implements TabExecutor {
                         StringUtil.copyPartialMatches(args[2],
                                 Arrays.asList("REGION", "EXECUTOR"),
                                 completions);
+                        break;
 
                     case "add":
                         StringUtil.copyPartialMatches(args[2],

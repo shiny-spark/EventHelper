@@ -84,10 +84,16 @@ public final class EventHelper extends JavaPlugin {
         for (String nick : getData().getKeys(false)) {
 
             for (String activatorName : getData().getConfigurationSection(nick).getKeys(false)) {
-
                 ActivatorType activatorType = ActivatorType.valueOf(getData().getString(nick + "." + activatorName + ".type"));
 
-                if (activatorType != ActivatorType.REGION) {
+                if (activatorType == ActivatorType.REGION) {
+                    String regionName = getData().getString(nick + "." + activatorName + ".regionName");
+                    loadActivator(nick, activatorName, new Region(this, nick, activatorName, regionName));
+
+                } else if (activatorType == ActivatorType.EXECUTOR) {
+                    loadActivator(nick, activatorName, new Executor(this, nick, activatorName));
+
+                } else {
                     String[] locArgs = getData().getString(nick + "." + activatorName + ".location").split(",");
                     World w = Bukkit.getWorld(locArgs[0]);
                     double x = Double.parseDouble(locArgs[1]);
@@ -102,9 +108,6 @@ public final class EventHelper extends JavaPlugin {
                         case BUTTON -> loadActivator(nick, activatorName, new Button(this, nick, activatorName, location));
                         case PLATE -> loadActivator(nick, activatorName, new Plate(this, nick, activatorName, location));
                     }
-                } else {
-                    String regionName = getData().getString(nick + "." + activatorName + ".regionName");
-                    loadActivator(nick, activatorName, new Region(this, nick, activatorName, regionName));
                 }
             }
         }
@@ -116,7 +119,7 @@ public final class EventHelper extends JavaPlugin {
             for (String eventType : configSection.getKeys(false)) {
                 if (activator.addEventProcessor(new EventProcessor(activator, EventType.valueOf(eventType), this))) {
                     for (String action : getData().getStringList(nick + "." + activatorName + ".eventType." + eventType)) {
-                        String[] act = action.split(":",2);
+                        String[] act = action.split(":", 2);
                         ActionType actionType = ActionType.valueOf(act[0]);
                         activator.getEventProcessor(EventType.valueOf(eventType))
                                 .addAction(actionType, act.length > 1 ? act[1] : null);

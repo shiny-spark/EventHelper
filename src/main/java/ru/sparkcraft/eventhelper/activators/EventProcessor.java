@@ -136,6 +136,8 @@ public class EventProcessor {
                         case META:
 
                             break;
+                        case CONDITION:
+                            break;
                     }
 
                 } else if (index < actionsQueue.size()) {
