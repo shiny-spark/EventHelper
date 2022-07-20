@@ -21,7 +21,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Commands implements TabExecutor {
-    private static final String[] COMMANDS = {"create", "add", "list", "delete", "clear", "remove", "select", "info", "execute"};
+    private final String[] COMMANDS = {"create", "add", "list", "delete", "clear", "remove", "select", "info", "execute"};
+    private final String[] META_SUB_COMMANDS = {"set", "unset", "add", "subtract"};
     private final EventHelper plugin;
     private final Map<CommandSender, Activator> selectedActivators = new HashMap<>();
 
@@ -33,6 +34,7 @@ public class Commands implements TabExecutor {
 
     private static final String NEED_TO_SELECT_OR_NAME = "Выберите активатор или укажите имя.";
     private static final String INVALID_ARGUMENTS = "Неверные аргументы команды.";
+    private static final String NOT_ENOUGH_ARGUMENTS = "Недостаточно аргументов.";
 
     public Commands(EventHelper plugin) {
         this.plugin = plugin;
@@ -104,23 +106,6 @@ public class Commands implements TabExecutor {
                     return;
                 }
 
-                if (args.length > index + 2 && actionType == ActionType.META) {
-                    String metaAction = args[index + 2];
-                    switch (metaAction) {
-                        case "set":
-                            sender.sendMessage("set");
-                            break;
-                        case "unset":
-                            break;
-                        case "add":
-                            break;
-                        case "subtract":
-                            break;
-                        default:
-                            sender.sendMessage("Неизвестное действие для META: " + metaAction);
-                    }
-                }
-
                 if (args.length > index + 2 && !noArgumentsNeeded) {
 
                     StringBuilder value = new StringBuilder();
@@ -148,10 +133,30 @@ public class Commands implements TabExecutor {
                                 finalValue = finalValue + " " + ((Player) sender).getWorld().getName();
                             }
                         } else {
-                            sender.sendMessage("Недостаточно аргументов.");
+                            sender.sendMessage(NOT_ENOUGH_ARGUMENTS);
                             return;
                         }
                     }
+
+                    if (actionType == ActionType.META) {
+                        String metaAction = args[index + 2];
+                        switch (metaAction) {
+                            case "set": {
+                                if (args.length != index + 4) {
+                                    sender.sendMessage(NOT_ENOUGH_ARGUMENTS);
+                                }
+                                break;
+                            }
+                            case "unset": {
+                                if (args.length != index + 3) {
+                                    sender.sendMessage(NOT_ENOUGH_ARGUMENTS);
+                                }
+                            }
+                        }
+                        sender.sendMessage("Неизвестное действие для META: " + metaAction);
+                        return;
+                    }
+
                     addAction(activator, eventType, actionType, sender, finalValue);
                 } else {
                     sender.sendMessage("Недостаточно аргументов.");
