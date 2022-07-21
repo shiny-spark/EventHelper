@@ -141,20 +141,23 @@ public class Commands implements TabExecutor {
                     if (actionType == ActionType.META) {
                         String metaAction = args[index + 2];
                         switch (metaAction) {
-                            case "set": {
-                                if (args.length != index + 4) {
+                            case "set" -> {
+                                if (args.length < index + 5) {
                                     sender.sendMessage(NOT_ENOUGH_ARGUMENTS);
+                                    return;
                                 }
-                                break;
                             }
-                            case "unset": {
-                                if (args.length != index + 3) {
+                            case "unset" -> {
+                                if (args.length < index + 4) {
                                     sender.sendMessage(NOT_ENOUGH_ARGUMENTS);
+                                    return;
                                 }
+                            }
+                            default -> {
+                                sender.sendMessage("Неизвестное действие для META: " + metaAction);
+                                return;
                             }
                         }
-                        sender.sendMessage("Неизвестное действие для META: " + metaAction);
-                        return;
                     }
 
                     addAction(activator, eventType, actionType, sender, finalValue);
@@ -453,9 +456,7 @@ public class Commands implements TabExecutor {
             case 3:
                 switch (args[0]) {
                     case "create":
-                        StringUtil.copyPartialMatches(args[2],
-                                Arrays.asList("REGION", "EXECUTOR"),
-                                completions);
+                        StringUtil.copyPartialMatches(args[2], Arrays.asList("REGION", "EXECUTOR"), completions);
                         break;
 
                     case "add":
