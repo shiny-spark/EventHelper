@@ -3,6 +3,11 @@ package ru.sparkcraft.eventhelper.activators;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.node.NodeType;
+import net.luckperms.api.node.types.MetaNode;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -73,7 +78,7 @@ public class EventProcessor {
             do {
                 action = actionsQueue.get(index++);
                 if (action.actionType != ActionType.DELAY) {
-
+                    String[] args = action.value.split(" ");
                     switch (action.actionType) {
                         case COMMAND:
                             Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
@@ -87,7 +92,6 @@ public class EventProcessor {
                             pl.sendMessage(parsed);
                             break;
                         case TP:
-                            String[] args = action.value.split(" ");
                             World w = Bukkit.getWorld(args[3]);
                             double x = Double.parseDouble(args[0]);
                             double y = Double.parseDouble(args[1]);
@@ -104,13 +108,11 @@ public class EventProcessor {
                             player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
                             break;
                         case GIVE:
-                            args = action.value.split(" ");
                             Material material = Material.valueOf(args[0].toUpperCase());
                             ItemStack itemStack = new ItemStack(material, Integer.parseInt(args[1]));
                             player.getInventory().addItem(itemStack);
                             break;
                         case TAKE:
-                            args = action.value.split(" ");
                             material = Material.valueOf(args[0].toUpperCase());
                             itemStack = new ItemStack(material, Integer.parseInt(args[1]));
                             player.getInventory().removeItem(itemStack);
@@ -134,7 +136,23 @@ public class EventProcessor {
                             }
                             break;
                         case META:
-
+                            String metaAction = args[0];
+                            LuckPerms luckPerms = LuckPermsProvider.get();
+                            User user = luckPerms.getPlayerAdapter(Player.class).getUser(player);
+                            String key = args[1];
+                            switch (metaAction) {
+                                case "set" -> {
+                                    String value = args[2];
+                                    MetaNode node = MetaNode.builder(key, value).build();
+                                    user.data().clear(NodeType.META.predicate(mn -> mn.getMetaKey().equals(key)));
+                                    user.data().add(node);
+                                    luckPerms.getUserManager().saveUser(user);
+                                }
+                                case "unset" -> {
+                                    user.data().clear(NodeType.META.predicate(mn -> mn.getMetaKey().equals(key)));
+                                    luckPerms.getUserManager().saveUser(user);
+                                }
+                            }
                             break;
                         case CONDITION:
                             break;

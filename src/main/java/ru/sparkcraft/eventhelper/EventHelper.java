@@ -29,12 +29,6 @@ public final class EventHelper extends JavaPlugin {
 
     @Override
     public void onEnable() {
-
-        RegisteredServiceProvider<LuckPerms> luckPermsProvider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
-        if (luckPermsProvider != null) {
-            LuckPerms api = luckPermsProvider.getProvider();
-        }
-
         PluginCommand command = getCommand("e");
         if (command != null) {
             command.setExecutor(new Commands(this));

@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 
 public class Commands implements TabExecutor {
     private final String[] COMMANDS = {"create", "add", "list", "delete", "clear", "remove", "select", "info", "execute"};
-    private final String[] META_SUB_COMMANDS = {"set", "unset", "add", "subtract"};
+    private final String[] META_SUB_COMMANDS = {"set", "unset", "plus", "minus"};
     private final EventHelper plugin;
     private final Map<CommandSender, Activator> selectedActivators = new HashMap<>();
 
@@ -406,7 +406,7 @@ public class Commands implements TabExecutor {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         final List<String> completions = new ArrayList<>();
         switch (args.length) {
-            case 1:
+            case 1 -> {
                 if (isActivatorSelected(sender)) {
                     StringUtil.copyPartialMatches(args[0],
                             Stream.of(EventType.values())
@@ -414,11 +414,9 @@ public class Commands implements TabExecutor {
                                     .collect(Collectors.toList()),
                             completions);
                 }
-
                 StringUtil.copyPartialMatches(args[0], Arrays.asList(COMMANDS), completions);
-                break;
-
-            case 2:
+            }
+            case 2 -> {
                 switch (args[0]) {
                     case "create":
                         return Collections.singletonList("<имя активатора>");
@@ -440,7 +438,6 @@ public class Commands implements TabExecutor {
                                 completions);
                         break;
                 }
-
                 if (Arrays.stream(EventType.values())
                         .map(EventType::name)
                         .toList()
@@ -451,9 +448,8 @@ public class Commands implements TabExecutor {
                                     .collect(Collectors.toList()),
                             completions);
                 }
-                break;
-
-            case 3:
+            }
+            case 3 -> {
                 switch (args[0]) {
                     case "create":
                         StringUtil.copyPartialMatches(args[2], Arrays.asList("REGION", "EXECUTOR"), completions);
@@ -470,13 +466,22 @@ public class Commands implements TabExecutor {
                     case "delete":
                         return Collections.singletonList("<индекс действия>");
                 }
-                break;
-
-            case 4:
-                if (args[2].equals("region")) {
+                if (args[1].equalsIgnoreCase("META")) {
+                    StringUtil.copyPartialMatches(args[2], Arrays.asList(META_SUB_COMMANDS), completions);
+                }
+            }
+            case 4 -> {
+                if (args[1].equalsIgnoreCase("META")) {
+                    if (args[2].equalsIgnoreCase("set")) {
+                        return Collections.singletonList("<ключ> <значение>");
+                    } else if (args[2].equalsIgnoreCase("unset")) {
+                        return Collections.singletonList("<ключ>");
+                    }
+                }
+                if (args[2].equalsIgnoreCase("REGION")) {
                     return Collections.singletonList("<название региона>");
                 }
-                break;
+            }
         }
 
         return completions;
