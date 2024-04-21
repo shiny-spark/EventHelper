@@ -1,54 +1,19 @@
 package ru.sparkcraft.eventhelper.activators;
 
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
-import net.luckperms.api.model.user.User;
-import net.luckperms.api.node.NodeType;
-import net.luckperms.api.node.types.MetaNode;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
-import ru.sparkcraft.eventhelper.EventHelper;
 
 import java.util.*;
 
 public class EventProcessor {
 
-    public static class Action {
-        private final ActionType actionType;
-        private final String value;
-
-        private Action(ActionType actionType, String value) {
-            this.actionType = actionType;
-            this.value = value;
-        }
-
-        public ActionType getActionType() {
-            return actionType;
-        }
-
-        public String getValue() {
-            return value;
-        }
-    }
-
+    private int id;
     private final List<Action> actionsQueue = new ArrayList<>();
     private final Activator activator;
     private final EventType eventType;
-    private final EventHelper plugin;
 
-    public EventProcessor(Activator activator, EventType eventType, EventHelper plugin) {
+    public EventProcessor(Activator activator, EventType eventType) {
         this.activator = activator;
         this.eventType = eventType;
-        this.plugin = plugin;
     }
 
     @Override
@@ -69,116 +34,29 @@ public class EventProcessor {
     }
 
     public void run(Player player) {
-        processQueue(player, 0);
-    }
-
-    public void processQueue(Player player, int index) {
-        if (!actionsQueue.isEmpty()) {
-            Action action;
-            do {
-                action = actionsQueue.get(index++);
-                if (action.actionType != ActionType.DELAY) {
-                    String[] args = action.value.split(" ");
-                    switch (action.actionType) {
-                        case COMMAND:
-                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                                    action.value.replace("%player%", player.getName()));
-                            break;
-                        case MESSAGE:
-                            Audience pl = (Audience) player;
-                            String message = action.value.replace("%player%", player.getName());
-                            var mm = MiniMessage.miniMessage();
-                            Component parsed = mm.deserialize(message);
-                            pl.sendMessage(parsed);
-                            break;
-                        case TP:
-                            World w = Bukkit.getWorld(args[3]);
-                            double x = Double.parseDouble(args[0]);
-                            double y = Double.parseDouble(args[1]);
-                            double z = Double.parseDouble(args[2]);
-                            player.teleport(new Location(w, x, y, z));
-                            break;
-                        case EFFECT:
-                            // player.addPotionEffect(new PotionEffect());
-                            break;
-                        case KILL:
-                            player.setHealth(0);
-                            break;
-                        case HEALTH:
-                            player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
-                            break;
-                        case GIVE:
-                            Material material = Material.valueOf(args[0].toUpperCase());
-                            ItemStack itemStack = new ItemStack(material, Integer.parseInt(args[1]));
-                            player.getInventory().addItem(itemStack);
-                            break;
-                        case TAKE:
-                            material = Material.valueOf(args[0].toUpperCase());
-                            itemStack = new ItemStack(material, Integer.parseInt(args[1]));
-                            player.getInventory().removeItem(itemStack);
-                            break;
-                        case ANNOUNCE:
-                            for (Player ply : Bukkit.getOnlinePlayers()) {
-                                pl = (Audience) ply;
-                                message = action.value.replace("%player%", player.getName());
-                                mm = MiniMessage.miniMessage();
-                                parsed = mm.deserialize(message);
-                                pl.sendMessage(parsed);
-                            }
-                            break;
-                        case FLY:
-                            if (action.value.equalsIgnoreCase("on")) {
-                                player.setAllowFlight(true);
-                                player.setFlying(true);
-                            } else if (action.value.equalsIgnoreCase("off")) {
-                                player.setAllowFlight(false);
-                                player.setFlying(false);
-                            }
-                            break;
-                        case META:
-                            String metaAction = args[0];
-                            LuckPerms luckPerms = LuckPermsProvider.get();
-                            User user = luckPerms.getPlayerAdapter(Player.class).getUser(player);
-                            String key = args[1];
-                            switch (metaAction) {
-                                case "set" -> {
-                                    String value = args[2];
-                                    MetaNode node = MetaNode.builder(key, value).build();
-                                    user.data().clear(NodeType.META.predicate(mn -> mn.getMetaKey().equals(key)));
-                                    user.data().add(node);
-                                    luckPerms.getUserManager().saveUser(user);
-                                }
-                                case "unset" -> {
-                                    user.data().clear(NodeType.META.predicate(mn -> mn.getMetaKey().equals(key)));
-                                    luckPerms.getUserManager().saveUser(user);
-                                }
-                            }
-                            break;
-                        case CONDITION:
-                            break;
-                    }
-
-                } else if (index < actionsQueue.size()) {
-                    int finalIndex = index;
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            processQueue(player, finalIndex);
-                        }
-                    }.runTaskLater(plugin, 20L * Long.parseLong(action.value));
-                }
-            } while (action.actionType != ActionType.DELAY && index < actionsQueue.size());
-        }
+        ActionProcessor.run(actionsQueue, player);
     }
 
     public void addAction(ActionType actionType, String value) {
-        getActionsQueue().add(new Action(actionType, value));
-        saveToFile();
+        Action action = new Action(this.id, actionType, value, getActionsQueue().size());
+        ActivatorDAO.getInstance().saveAction(action);
+        getActionsQueue().add(action);
+    }
+
+    public void addAction(Action action) {
+        getActionsQueue().add(action);
     }
 
     public void deleteAction(int index) {
         getActionsQueue().remove(index);
-        saveToFile();
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public Activator getActivator() {
@@ -191,14 +69,5 @@ public class EventProcessor {
 
     public List<Action> getActionsQueue() {
         return actionsQueue;
-    }
-
-    private void saveToFile() {
-        List<String> actions = new ArrayList<>();
-        for (Action action : actionsQueue) {
-            actions.add(action.value == null ? action.actionType.name() : action.actionType.name() + ":" + action.value);
-        }
-        plugin.getData().set(activator.getOwner() + "." + activator.getName() + ".eventType." + eventType.name(), actions);
-        plugin.saveData();
     }
 }

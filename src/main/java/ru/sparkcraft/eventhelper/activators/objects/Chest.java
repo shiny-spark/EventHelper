@@ -1,33 +1,21 @@
 package ru.sparkcraft.eventhelper.activators.objects;
 
 import org.bukkit.Location;
-import ru.sparkcraft.eventhelper.EventHelper;
 import ru.sparkcraft.eventhelper.activators.*;
 
-import java.util.Objects;
+public class Chest extends Activator {
 
-public class Chest extends Activator implements HaveLocation {
-
-    private final Location location;
-
-    public Chest(EventHelper plugin, String owner, String name, Location location) {
-        super(plugin, owner, ActivatorType.CHEST, name);
-        this.location = location;
-        saveToFile(plugin, this);
+    public Chest(String owner, String name, Location location) {
+        super(owner, ActivatorType.CHEST, name, location);
     }
 
     @Override
-    public Location getLocation() {
-        return location;
-    }
-
-    @Override
-    public boolean addEventProcessor(EventProcessor eventProcessor) {
-        if (eventProcessor.getEventType() == EventType.OPEN ||
-                eventProcessor.getEventType() == EventType.CLOSE ||
-                eventProcessor.getEventType() == EventType.PUT ||
-                eventProcessor.getEventType() == EventType.TAKE) {
-            getEventProcessors().add(eventProcessor);
+    public boolean addEventProcessor(EventType eventType) {
+        if (eventType == EventType.OPEN ||
+                eventType == EventType.CLOSE ||
+                eventType == EventType.PUT ||
+                eventType == EventType.TAKE) {
+            putEventProcessor(eventType);
             return true;
         }
         return false;

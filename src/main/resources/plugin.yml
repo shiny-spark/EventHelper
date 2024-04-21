@@ -1,7 +1,7 @@
 name: EventHelper
 version: '${project.version}'
 main: ru.sparkcraft.eventhelper.EventHelper
-api-version: 1.18
+api-version: 1.20
 authors: [ Spark ]
 website: sparkcraft.ru
 depend: [ WorldGuard, WorldGuardEvents ]
@@ -10,3 +10,5 @@ commands:
     description: no
     aliases:
       - e
+libraries:
+  - com.zaxxer:HikariCP:5.1.0

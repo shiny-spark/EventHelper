@@ -1,35 +1,35 @@
 package ru.sparkcraft.eventhelper.activators;
 
 import org.bukkit.Location;
-import ru.sparkcraft.eventhelper.EventHelper;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import ru.sparkcraft.eventhelper.activators.objects.Function;
 import ru.sparkcraft.eventhelper.activators.objects.Region;
 
 import java.util.*;
 
 public abstract class Activator {
 
-    private static final Map<String, Set<Activator>> activators = new HashMap<>();
-
+    private static Map<String, Set<Activator>> activators = new HashMap<>();
+    private int id;
     private final String owner;
     private final ActivatorType type;
     private final String name;
-    private final Set<EventProcessor> eventProcessors = new HashSet<>();
+    private final Location location;
+    private final Map<EventType, EventProcessor> eventProcessors = new EnumMap<>(EventType.class);
 
-    protected Activator(EventHelper plugin, String owner, ActivatorType type, String name) {
+    protected Activator(String owner, ActivatorType type, String name, Location location) {
         this.owner = owner;
         this.type = type;
         this.name = name;
+        this.location = location;
 
         Set<Activator> list = activators.get(owner);
         if (list != null) {
             list.add(this);
         } else {
-            list = new HashSet<>();
-            list.add(this);
-            activators.put(owner, list);
+            activators.put(owner, new HashSet<>(Collections.singleton(this)));
         }
-        plugin.getData().set(this.getOwner() + "." + this.getName() + ".type", this.type.name());
-        plugin.saveData();
     }
 
     @Override
@@ -44,6 +44,14 @@ public abstract class Activator {
         return Objects.hash(name);
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public String getOwner() {
         return owner;
     }
@@ -56,33 +64,42 @@ public abstract class Activator {
         return name;
     }
 
-    public Set<EventProcessor> getEventProcessors() {
+    public Location getLocation() {
+        return location;
+    }
+
+    public abstract boolean addEventProcessor(EventType eventType);
+
+    public void addEventProcessor(EventProcessor eventProcessor) {
+        eventProcessors.put(eventProcessor.getEventType(), eventProcessor);
+    }
+
+    public Map<EventType, EventProcessor> getEventProcessors() {
         return eventProcessors;
     }
 
-    public abstract boolean addEventProcessor(EventProcessor eventProcessor);
+    public void putEventProcessor(@NotNull EventType eventType) {
+        eventProcessors.computeIfAbsent(eventType, key -> {
+            EventProcessor eventProcessor = new EventProcessor(this, key);
+            ActivatorDAO.getInstance().saveEventProcessor(eventProcessor);
+            return eventProcessor;
+        });
+    }
 
     public EventProcessor getEventProcessor(EventType eventType) {
-        return eventProcessors.stream()
-                .filter(eventProcessor -> eventProcessor.getEventType().equals(eventType))
-                .findFirst().orElse(null);
+        return eventProcessors.get(eventType);
     }
 
     public boolean removeEventProcessor(EventType eventType) {
-        return eventProcessors.removeIf(eventProcessor -> eventProcessor.getEventType().equals(eventType));
+        return eventProcessors.remove(eventType) != null;
     }
 
-    public static boolean removeActivator(EventHelper plugin, String owner, String name) {
+    public static boolean removeActivator(String owner, String name) {
         Activator activator = getActivator(owner, name);
-        if (getActivators(owner).remove(activator)) {
-            plugin.getData().set(owner + "." + name, null);
-            plugin.saveData();
-            return true;
-        }
-        return false;
+        return getActivators(owner).remove(activator);
     }
 
-    public static Activator getActivator(String owner, String name) {
+    public static @Nullable Activator getActivator(String owner, String name) {
         Set<Activator> activators = getActivators(owner);
         if (activators != null) {
             for (Activator activator : activators) {
@@ -94,11 +111,10 @@ public abstract class Activator {
         return null;
     }
 
-    public static Activator getActivator(Location location) {
+    public static @Nullable Activator getActivator(Location location) {
         for (Set<Activator> list : activators.values()) {
             for (Activator activator : list) {
-                if (activator instanceof HaveLocation &&
-                        ((HaveLocation) activator).getLocation().equals(location)) {
+                if (activator.getLocation() != null && activator.getLocation().equals(location)) {
                     return activator;
                 }
             }
@@ -106,11 +122,21 @@ public abstract class Activator {
         return null;
     }
 
-    public static Activator getActivator(String regionName) {
+    public static @Nullable Activator getFunctionActivator(String functionName) {
         for (Set<Activator> list : activators.values()) {
             for (Activator activator : list) {
-                if (activator.getType() == ActivatorType.REGION &&
-                        ((Region) activator).getRegionName().equals(regionName)) {
+                if (activator instanceof Function function && function.getName().equalsIgnoreCase(functionName)) {
+                    return activator;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static @Nullable Activator getRegionActivator(String regionName) {
+        for (Set<Activator> list : activators.values()) {
+            for (Activator activator : list) {
+                if (activator instanceof Region region && region.getRegionName().equalsIgnoreCase(regionName)) {
                     return activator;
                 }
             }
@@ -120,5 +146,13 @@ public abstract class Activator {
 
     public static Set<Activator> getActivators(String owner) {
         return activators.get(owner);
+    }
+
+    public static void reloadActivators() {
+        for (Set<Activator> activatorSet : activators.values()) {
+            activatorSet.clear();
+        }
+        activators.clear();
+        ActivatorDAO.getInstance().loadData();
     }
 }

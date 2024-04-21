@@ -1,1 +1,6 @@
-
+databaseSettings:
+  host: localhost
+  port: 3306
+  database: database
+  login: login
+  password: password
