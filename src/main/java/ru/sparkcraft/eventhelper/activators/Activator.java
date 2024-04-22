@@ -3,6 +3,7 @@ package ru.sparkcraft.eventhelper.activators;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.sparkcraft.eventhelper.EventHelper;
 import ru.sparkcraft.eventhelper.activators.objects.Function;
 import ru.sparkcraft.eventhelper.activators.objects.Region;
 
@@ -10,7 +11,7 @@ import java.util.*;
 
 public abstract class Activator {
 
-    private static Map<String, Set<Activator>> activators = new HashMap<>();
+    private static final Map<String, Set<Activator>> activators = new HashMap<>();
     private int id;
     private final String owner;
     private final ActivatorType type;
@@ -91,11 +92,17 @@ public abstract class Activator {
     }
 
     public boolean removeEventProcessor(EventType eventType) {
-        return eventProcessors.remove(eventType) != null;
+        EventProcessor eventProcessor = eventProcessors.remove(eventType);
+        if (eventProcessor != null) {
+            ActivatorDAO.getInstance().deleteEventProcessor(eventProcessor);
+            return true;
+        }
+        return false;
     }
 
     public static boolean removeActivator(String owner, String name) {
         Activator activator = getActivator(owner, name);
+        if (activator != null) ActivatorDAO.getInstance().deleteActivator(activator);
         return getActivators(owner).remove(activator);
     }
 
@@ -153,6 +160,6 @@ public abstract class Activator {
             activatorSet.clear();
         }
         activators.clear();
-        ActivatorDAO.getInstance().loadData();
+        ActivatorDAO.getInstance().loadDate();
     }
 }

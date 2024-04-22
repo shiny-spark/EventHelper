@@ -48,7 +48,8 @@ public class EventProcessor {
     }
 
     public void deleteAction(int index) {
-        getActionsQueue().remove(index);
+        Action action = getActionsQueue().remove(index);
+        ActivatorDAO.getInstance().deleteAction(action);
     }
 
     public int getId() {

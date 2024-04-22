@@ -27,7 +27,7 @@ public class EventHelper extends JavaPlugin {
 
         ActionProcessor.init(this);
 
-        ActivatorDAO.getInstance().loadData();
+        ActivatorDAO.getInstance().loadDate();
     }
 
     @Override

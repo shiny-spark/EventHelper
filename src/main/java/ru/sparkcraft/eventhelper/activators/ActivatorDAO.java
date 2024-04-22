@@ -81,7 +81,7 @@ public class ActivatorDAO {
                     "order_field INT(11) NOT NULL, " +
                     "value VARCHAR(1000) NULL, " +
                     "event_processor_id INT(11) NOT NULL, " +
-                    "FOREIGN KEY (event_processor_id) REFERENCES e_event_processor(id) ON DELETE RESTRICT ON UPDATE RESTRICT);";
+                    "FOREIGN KEY (event_processor_id) REFERENCES e_event_processor(id) ON DELETE CASCADE ON UPDATE CASCADE);";
             executeSql(sql);
 
         } catch (SQLException e) {
@@ -172,34 +172,45 @@ public class ActivatorDAO {
         }
     }
 
-    public void updateLocation(@NotNull Activator activator, int activatorId) {
-        String sql = "UPDATE `e_activator` SET `location` = ? WHERE `id` = ?;";
+    public void deleteAction(@NotNull Action action) {
+        String sql = "DELETE FROM `e_action` WHERE `id` = ?";
+
+        System.out.println(action.getId());
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            String location = activator.getLocation().getWorld().getName() + "," + activator.getLocation().getX() + "," + activator.getLocation().getY() + "," + activator.getLocation().getZ();
-            preparedStatement.setString(1, location);
-            preparedStatement.setInt(2, activatorId);
-            preparedStatement.executeUpdate();
+            preparedStatement.setInt(1, action.getId());
+            preparedStatement.execute();
         } catch (SQLException e) {
             Bukkit.getLogger().severe(e.getMessage());
         }
     }
 
-    public void updateRegion(String regionName, int activatorId) {
-        String sql = "UPDATE `e_activator` SET `region_name` = ? WHERE `id` = ?;";
+    public void deleteEventProcessor(@NotNull EventProcessor eventProcessor) {
+        String sql = "DELETE FROM `e_event_processor` WHERE `id` = ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, regionName);
-            preparedStatement.setInt(2, activatorId);
-            preparedStatement.executeUpdate();
+            preparedStatement.setInt(1, eventProcessor.getId());
+            preparedStatement.execute();
         } catch (SQLException e) {
             Bukkit.getLogger().severe(e.getMessage());
         }
     }
 
-    public void loadData() {
+    public void deleteActivator(@NotNull Activator activator) {
+        String sql = "DELETE FROM `e_activator` WHERE `id` = ?";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, activator.getId());
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            Bukkit.getLogger().severe(e.getMessage());
+        }
+    }
+
+    public void loadDate() {
         try (Connection connection = dataSource.getConnection()) {
 
             String sql = "SELECT * FROM `e_activator`;";
@@ -221,6 +232,7 @@ public class ActivatorDAO {
                         case REGION -> new Region(owner, name, locationString);
                         case FUNCTION -> new Function(owner, name);
                     };
+                    activator.setId(activatorId);
 
                     String sqlEventProcessors = "SELECT * FROM `e_event_processor` WHERE `activator_id` = ?;";
                     try (PreparedStatement statementEventProcessors = connection.prepareStatement(sqlEventProcessors)) {
@@ -230,6 +242,7 @@ public class ActivatorDAO {
                                 EventType eventType = EventType.valueOf(resultSetEventProcessors.getString("event_type"));
                                 int eventProcessorId = resultSetEventProcessors.getInt("id");
                                 EventProcessor eventProcessor = new EventProcessor(activator, eventType);
+                                eventProcessor.setId(eventProcessorId);
 
                                 String sqlActions = "SELECT * FROM `e_action` WHERE `event_processor_id` = ? ORDER BY `order_field`;";
                                 try (PreparedStatement statementActions = connection.prepareStatement(sqlActions)) {
@@ -239,7 +252,9 @@ public class ActivatorDAO {
                                             ActionType actionType = ActionType.valueOf(resultSetActions.getString("action_type"));
                                             String value = resultSetActions.getString("value");
                                             int order = resultSetActions.getInt("order_field");
+                                            int actionId = resultSetActions.getInt("id");
                                             Action action = new Action(eventProcessorId, actionType, value, order);
+                                            action.setId(actionId);
                                             eventProcessor.addAction(action);
                                         }
                                     }

@@ -1,9 +1,6 @@
 package ru.sparkcraft.eventhelper.commands;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -32,7 +29,6 @@ public class Commands implements TabExecutor {
     private static final String ACTIVATOR_CREATED = "Активатор создан под именем: ";
     private static final String FUNCTION_CREATED = "Функция создана под именем: ";
     private static final String ACTIVATOR_ALREADY_EXISTS = "Активатор с таким именем уже существует.";
-    private static final String FUNCTION_ALREADY_EXISTS = "Функция с таким именем уже существует.";
     private static final String NEED_TO_SELECT = "Сначала выберите активатор.";
     private static final String NEED_TO_SELECT_OR_NAME = "Выберите активатор или укажите имя.";
     private static final String INVALID_ARGUMENTS = "Неверные аргументы команды.";
@@ -149,7 +145,7 @@ public class Commands implements TabExecutor {
 
                     addAction(activator, eventType, actionType, sender, finalValue);
                 } else {
-                    sender.sendMessage("Недостаточно аргументов.");
+                    sender.sendMessage(NOT_ENOUGH_ARGUMENTS);
                 }
             } else {
                 sender.sendMessage(NEED_TO_SELECT);
@@ -176,11 +172,11 @@ public class Commands implements TabExecutor {
             Player player = (Player) sender;
             Block block = player.getTargetBlock(null, 5);
             String activatorName = args[1];
-            if (block.getType().name().endsWith("_BUTTON")) {
+            if (Tag.BUTTONS.isTagged(block.getType())) {
                 createActivator(sender, activatorName, block.getLocation(), ActivatorType.BUTTON);
-            } else if (block.getType().name().endsWith("_PLATE")) {
+            } else if (Tag.PRESSURE_PLATES.isTagged(block.getType())) {
                 createActivator(sender, activatorName, block.getLocation(), ActivatorType.PLATE);
-            } else if (block.getType().name().endsWith("_DOOR")) {
+            } else if (Tag.DOORS.isTagged(block.getType())) {
                 createActivator(sender, activatorName, Door.getTop(block), ActivatorType.DOOR);
             } else if (block.getType() == Material.LEVER) {
                 createActivator(sender, activatorName, block.getLocation(), ActivatorType.LEVER);
@@ -374,7 +370,7 @@ public class Commands implements TabExecutor {
         }
     }
 
-    private void reload(CommandSender sender) {
+    private void reload(@NotNull CommandSender sender) {
         Activator.reloadActivators();
         sender.sendMessage("Данные перезагружены!");
     }
